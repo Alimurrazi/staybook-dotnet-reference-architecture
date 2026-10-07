@@ -15,6 +15,9 @@
       "Bash(git log *)",
       "Bash(git show *)",
       "Bash(git branch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git switch *)",
       "Bash(docker ps *)",
       "Bash(docker logs *)"
     ],
@@ -59,6 +62,11 @@
             "type": "command",
             "command": "dotnet run \"$CLAUDE_PROJECT_DIR/.claude/hooks/build-after-edit.cs\"",
             "timeout": 300
+          },
+          {
+            "type": "command",
+            "command": "dotnet run \"$CLAUDE_PROJECT_DIR/.claude/hooks/commit-reminder.cs\"",
+            "timeout": 120
           }
         ]
       }
@@ -68,7 +76,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "dotnet run \"$CLAUDE_PROJECT_DIR/.claude/hooks/test-before-stop.cs\"",
+            "command": "dotnet run \"$CLAUDE_PROJECT_DIR/.claude/hooks/finish-step.cs\"",
             "timeout": 900
           }
         ]

@@ -88,13 +88,19 @@ Each module owns one PostgreSQL schema named after the module (`listings`, `pric
 |---|---|---|
 | This file and module `CLAUDE.md` files | Repo root, each module folder | Rules Claude reads; module files load when Claude works in that folder |
 | Permissions | `.claude/settings.json` | Allowed `dotnet`/`git`/`docker` commands; secrets are denied |
-| Hooks | `.claude/hooks/*.cs`, wired in `.claude/settings.json` | Block protected edits; build after edits; run affected tests before stopping |
+| Hooks | `.claude/hooks/*.cs`, wired in `.claude/settings.json` | Block protected edits; build after edits; remind to commit when uncommitted work grows; before stopping, run affected tests and ask for a commit of finished work |
 | Skills | `.claude/skills/` | `/new-value-object`, `/new-aggregate`, `/new-command`, `/new-endpoint` |
 | Subagents | `.claude/agents/` | `architecture-reviewer`, `test-writer` |
 
 Hooks are C# file-based apps run with `dotnet run`. The first run of each compiles it (about 30 to 40 seconds); later runs take under a second.
 
-**Working loop:** plan → write the failing test → implement → hooks and tests verify → `architecture-reviewer` → human review.
+**Working loop:** plan → write the failing test → implement → hooks and tests verify → commit → `architecture-reviewer` → human review.
+
+## Commits
+
+- Commit each finished step as soon as it builds and its tests pass, on the article branch. Don't wait for the end of a long session; the history is part of what readers study.
+- One step per commit, with a conventional message (`feat:`, `test:`, `docs:`, `chore:`, `fix:`) that says what the step does.
+- Never commit to `master` directly and never push without the author's go-ahead.
 
 ## Working with the author
 

@@ -14,10 +14,11 @@
       "Bash(git diff *)",
       "Bash(git log *)",
       "Bash(git show *)",
-      "Bash(git branch *)",
+      "Bash(git branch --show-current)",
+      "Bash(git branch --list*)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git switch *)",
+      "Bash(git switch -c *)",
       "Bash(docker ps *)",
       "Bash(docker logs *)"
     ],

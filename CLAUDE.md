@@ -36,7 +36,8 @@ src/Staybook.Api/              Host and composition root: registers modules, not
 src/Staybook.SharedKernel/     Money, DateRange, Result, base types. Keep it small
 src/Modules/<Module>/Staybook.<Module>/            Domain/ Application/ Infrastructure/ Endpoints/ <Module>Module.cs
 src/Modules/<Module>/Staybook.<Module>.Contracts/  The only part other modules may reference
-tests/                         ArchitectureTests, FullFlowTests, Modules/<Module>.Tests
+tests/Staybook.ArchitectureTests/         Architecture and convention tests
+tests/Modules/<Module>.Tests/             Staybook.<Module>.Tests: unit and integration tests per module
 ```
 
 **Dependency rule inside a module:** `Endpoints → Application → Domain`; `Infrastructure → Application, Domain`. `Domain` references only itself and `SharedKernel`: no Marten, Wolverine, ASP.NET Core or EF.

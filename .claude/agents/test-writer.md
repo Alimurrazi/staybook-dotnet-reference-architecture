@@ -26,7 +26,7 @@ Never use FluentAssertions, Moq or an in-memory database.
 
 ## Conventions
 
-- Tests for a module live in `tests/Modules/<Module>/Staybook.<Module>.Tests/`, mirroring the source folders (`Domain/`, `Application/`).
+- Tests for a module live in `tests/Modules/<Module>.Tests/` (project `Staybook.<Module>.Tests`), mirroring the source folders (`Domain/`, `Application/`).
 - One test class per unit of behavior, named after it: `MoneyAllocationTests`, `PublishListingTests`.
 - Test names are sentences with underscores describing the behavior: `Publishing_without_a_pricing_plan_fails`.
 - Arrange, act, assert, separated by blank lines. One behavior per test.

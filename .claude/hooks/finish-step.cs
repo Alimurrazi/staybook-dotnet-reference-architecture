@@ -143,7 +143,7 @@ static List<string> AffectedTestProjects(string projectDir, List<string> changes
         var parts = change.Split('/');
         if (parts is ["src", "Modules", var module, ..])
         {
-            affected.UnionWith(all.Where(t => t.StartsWith($"tests/Modules/{module}/", StringComparison.Ordinal)));
+            affected.UnionWith(all.Where(t => t.StartsWith($"tests/Modules/{module}.Tests/", StringComparison.Ordinal)));
             affected.UnionWith(all.Where(t => t.StartsWith("tests/Staybook.ArchitectureTests/", StringComparison.Ordinal)));
         }
         else if (parts is ["tests", ..])

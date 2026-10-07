@@ -12,7 +12,9 @@ An Airbnb-style vacation rental **backend** in ASP.NET Core 10, built step by st
 
 - Planning is complete (revised after three reviews).
 - **No code yet. Next: article 1, "Designing and setting up Staybook"** (plan section 9).
-- Before article 1, verify the items listed for it in plan section 16.
+- The article 1 checks in plan section 16 are done: `docs/planning/verification/article-01.md`.
+- Article 1 creates skeletons only for Listings, Pricing and Identity (plan decision 43).
+- Each article ships as article text plus repo code (plan decision 44).
 - Article 1 creates the full Claude Code harness (module `CLAUDE.md` files, hooks, skills, subagents) as part of the series. This file is only a bootstrap until then.
 
 ## Rules for every session

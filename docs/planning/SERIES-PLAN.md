@@ -1,6 +1,6 @@
 # Staybook: .NET Article Series Plan
 
-*As of 2026-10-05 · Working name "Staybook" (alternatives: Nestly, Hostly) · Revised after three draft reviews*
+*As of 2026-10-05 · Name: "Staybook" · Repo: `staybook-dotnet-reference-architecture` · Revised after three draft reviews*
 
 A 14-article series in four phases that builds an **Airbnb-style vacation rental backend** with ASP.NET Core 10. It is a **production-oriented reference architecture**: it shows how a simple rental application evolves when it meets real problems (concurrency, consistency, external failures, financial correctness and security), and which architectural decisions those problems justify.
 
@@ -151,7 +151,9 @@ Some articles start with the simple version most developers write first. Its wea
 | 39 | **Keycloak, JWT, role policies and resource-based ownership in article 4**, with seeded host, guest and admin users | Every Phase 1 endpoint is protected before release |
 | 40 | **Auditing through a command audit trail for every module** (article 13) | Only Booking is event-sourced |
 | 41 | **Testing inside every article, one tool per purpose** | Readers learn each technique where the code needs it |
-| 42 | **Claude Code harness as an optional workflow** | Described briefly in article 1, detailed in the repo; mentioned only where there is a real lesson |
+| 42 | **Claude Code harness built completely in article 1 and explained in detail there** | Readers see exactly which harness is attached (`CLAUDE.md` files, permissions, hooks, skills, subagents, MCP) and why each piece exists; later articles mention it only where there is a real lesson |
+| 43 | **Article 1 creates skeletons only for Listings, Pricing and Identity** | Booking and Payments are added in article 5, Availability in article 6, Notifications in article 7, so no module exists before the domain needs it |
+| 44 | **Each article ships as article text plus repo** | The article draft is written alongside the code and lives in the repo |
 
 ---
 
@@ -340,6 +342,8 @@ While a payment outcome is **unknown**, the booking stays in its current state a
 
 **Pricing (fee percentages are illustrative and configurable):**
 
+Staybook uses Airbnb's **older split-fee model** (a guest fee plus a host fee). Airbnb has since moved most hosts to a single host-only fee of about 15.5%. The split model is kept on purpose: two fees teach more (the guest-pays identity, refunding the guest fee, recalculating the host fee on cancellation). Verified 2026-10-05; see `verification/article-01.md`.
+
 - Every pricing-plan change increments the **pricing version**.
 - Nights total = nights × nightly rate.
 - **Weekly discount:** a percentage (for example 10%) of the nights total, for stays of 7 nights or more. Applied **before** the cleaning fee.
@@ -380,6 +384,8 @@ While a payment outcome is **unknown**, the booking stays in its current state a
 Check: 654.69 + 114.74 = 769.43. Property-based tests assert this identity for any input.
 
 **Cancellation policies (simplified rules for this project, modeled on Airbnb's):**
+
+These are deliberately simplified. Airbnb's current standard policies are Flexible, Moderate, Limited and Firm (Strict is invitation-only), its Moderate keeps one night plus 50% of the rest, and it adds a 24-hour grace period for bookings made 7 or more days ahead. None of that is modeled here; the article states it. Verified 2026-10-05.
 
 Cutoffs are measured against the **check-in datetime in the listing's time zone** (check-in date + check-in time), compared with the current UTC time.
 
@@ -664,7 +670,7 @@ Staybook.Pricing/
 
 ### Publishing order
 
-1. Build Phase 1, then **prototype the booking and availability transaction boundary** (articles 5 and 6 core, including idempotent allocation and lost-response tests) before publishing article 1.
+1. Build Phase 1, then **prototype the booking and availability transaction boundary** (articles 5 and 6 core, including idempotent allocation and lost-response tests) before publishing article 1. The prototype lives on a throwaway branch (`spike/booking-availability`) and is never merged; `master` keeps the article order, and what the prototype teaches goes into the plan and ADRs.
 2. Publish Phase 1 while completing Phase 2 (reliable messaging and sagas). Phase 2 is the foundation the payment articles and any companion series reuse.
 3. Publish Phase 2 while finishing the Stripe and ledger implementation, kept focused on what the rental application needs.
 4. Publish Phases 3 and 4.
@@ -708,16 +714,16 @@ Staybook.Pricing/
 
 8. **Solution structure and tooling.** Option B structure; central package management, analyzers, warnings-as-errors, and why each matters.
 9. **Minimal infrastructure.** Aspire with PostgreSQL; Keycloak registered but configured in article 4; Marten and Wolverine registered only.
-10. **Module skeletons.** Contracts projects, schema per module, module registration; where the first feature will go.
+10. **Module skeletons.** Listings, Pricing and Identity only (decision 43): Contracts projects, schema per module, module registration; where the first feature will go.
 11. **Basic observability and CI.** OpenTelemetry through ServiceDefaults; build and test on every PR.
 12. **Architecture tests.** Enforcing layers and module boundaries from the first commit.
-13. **Optional: the Claude Code harness.** One short section; the details live in the repo (section 12).
+13. **The Claude Code harness.** A full section (decision 42): every piece in section 12, what it does, how it is attached and why it is there.
 
 **Tests introduced:** architecture tests (ArchUnitNET).
 
 **Building this with Claude Code:** writing `CLAUDE.md` before any code, and watching architecture tests catch Claude's first boundary violation.
 
-**Deliverables:** context map, ADRs 1 to 4, solution skeleton, CI workflow, `.claude/` folder, architecture diagram v1, tag `article-01`.
+**Deliverables:** article text, context map, ADRs 1 to 4, solution skeleton (Listings, Pricing, Identity), CI workflow, complete `.claude/` harness, architecture diagram v1, tag `article-01`.
 
 **Pitfalls to discuss:** designing around technology instead of the domain; starting with microservices; setting up infrastructure before it is needed; a shared kernel that becomes a dumping ground.
 
@@ -906,7 +912,7 @@ flowchart LR
 
 **Building this with Claude Code:** plan mode to design events before code; the `test-writer` subagent writing Given/When/Then tests first.
 
-**Deliverables:** Booking module, payment boundary with operation records and the fake gateway, projections, ADRs 15 to 17, tag `article-05`.
+**Deliverables:** Booking and Payments module skeletons and the Booking module, payment boundary with operation records and the fake gateway, projections, ADRs 15 to 17, tag `article-05`.
 
 **Pitfalls to discuss:** CRUD-like events (`BookingUpdated`); putting the read model's shape into events; event sourcing everything; treating a timeout as a failure.
 
@@ -945,7 +951,7 @@ flowchart LR
 
 **Building this with Claude Code:** asking Claude to try to break the design with race and lost-response scenarios before writing the fix.
 
-**Deliverables:** Availability module, allocations table and constraint, availability view, ADR 18, tag `article-06`.
+**Deliverables:** Availability module skeleton and module, allocations table and constraint, availability view, ADR 18, tag `article-06`.
 
 **Pitfalls to discuss:** "check then insert" without a constraint; deciding availability from a projection; putting `now()` in a constraint; non-idempotent allocation commands; holds that never expire; using locks where a constraint is simpler.
 
@@ -1362,18 +1368,18 @@ Tests are introduced in the article whose code needs them. CI runs every test on
 
 | Purpose | Tool |
 |---|---|
-| Test framework | xUnit v3 (check that FsCheck, Alba and Stryker.NET support it before article 1) |
+| Test framework | xUnit v3 (verified: FsCheck.Xunit.v3 and Alba support it; Stryker.NET needs its MTP runner) |
 | Assertions | Shouldly |
 | Property-based testing | FsCheck |
 | Real databases in tests | Testcontainers |
 | Resetting data between tests | Marten's built-in data reset (no extra library) |
 | HTTP-level integration tests | Alba |
-| Architecture and convention tests | ArchUnitNET (actively maintained; NetArchTest hasn't been updated in years) |
+| Architecture and convention tests | ArchUnitNET (actively maintained; NetArchTest hasn't been updated in years). Run against Debug builds, with a guard test and a canary test, because of issue #498: Release builds miss dependencies inside async methods |
 | Snapshot tests (OpenAPI, message contracts) | Verify |
 | HTTP fakes and fault injection | WireMock.Net |
 | Payment failure scenarios | The fake gateway's failure simulator (project code, no library) |
 | Load tests | k6 |
-| Mutation tests | Stryker.NET |
+| Mutation tests | Stryker.NET with `test-runner: mtp` (required for xUnit v3) |
 
 ### By article
 
@@ -1414,7 +1420,7 @@ Tests are introduced in the article whose code needs them. CI runs every test on
 
 ## 12. Claude Code harness
 
-An **optional workflow**, introduced briefly in article 1 and documented in the repo. `CLAUDE.md` guides; tests, analyzers and hooks enforce. Articles mention Claude Code only when there is a real development lesson.
+Built completely in article 1 and **explained in detail there** (decision 42), then documented in the repo. `CLAUDE.md` guides; tests, analyzers and hooks enforce. Articles mention Claude Code only when there is a real development lesson.
 
 | Piece | Location | What it holds |
 |---|---|---|
@@ -1494,7 +1500,7 @@ Stated in article 1 and revisited in article 14:
 | Risk | Mitigation |
 |---|---|
 | The series becomes a technology showcase | Every article explains the problem first, the alternatives, and when not to use the pattern |
-| Article 1 is too long after the merge | Discovery follows one scenario; setup is shown as decisions, with steps in the README |
+| Article 1 is too long after the merge | Discovery follows one scenario; setup is shown as decisions, with steps in the README. The harness section stays in article 1 (decision 42). If the draft still runs long, nothing is cut: the author reviews it and decides |
 | An article takes longer to build than a week | Keep at least one phase built ahead; buffer weeks; passing tests are the release criteria |
 | Articles become too long | Caching optional in article 3; versioning in 11; cancellations in 10; advanced payments in the companion series |
 | Article 2 feels abstract because nothing runs yet | Keep it test-driven so every concept has a passing test; end with a teaser of article 3's API |
@@ -1523,8 +1529,8 @@ Stated in article 1 and revisited in article 14:
 - [x] Settle when and how search filters by dates (decision 29)
 - [x] Settle the cross-module communication rules and operation IDs (decisions 23 and 27)
 - [x] Settle payment outcomes and recovery (decisions 32 to 34)
-- [ ] Verify the items in section 16 (tool compatibility, maintenance, licensing, Stripe behavior)
-- [ ] Choose the final name and check the GitHub repo name
+- [x] Verify the article 1 items in section 16 (`verification/article-01.md`); later items are checked before their article
+- [x] Choose the final name and check the GitHub repo name: Staybook, `staybook-dotnet-reference-architecture`
 - [ ] Create the empty repo and write the first ADRs
 - [ ] Build Phase 1 (articles 1 to 4)
 - [ ] Prototype the booking and availability transaction boundary, including idempotent allocation and lost-response tests
@@ -1576,13 +1582,15 @@ Stated in article 1 and revisited in article 14:
 
 ### Items to verify before writing the related article
 
+Results are recorded in `verification/article-<NN>.md`.
+
 | Item | Before article |
 |---|---|
-| xUnit v3 support in FsCheck, Alba and Stryker.NET | 1 |
-| ArchUnitNET maintenance status and .NET 10 support | 1 |
-| Marten and Wolverine licensing (MIT core, commercial add-ons) | 1 |
-| Library licensing statements (MediatR, AutoMapper, MassTransit v9, FluentAssertions v8) | 1 |
-| Airbnb's actual fee percentages and cancellation policies (this project uses simplified, illustrative rules) | 1 |
+| ✅ xUnit v3 support in FsCheck, Alba and Stryker.NET | 1 |
+| ✅ ArchUnitNET maintenance status and .NET 10 support | 1 |
+| ✅ Marten and Wolverine licensing (MIT core, commercial add-ons) | 1 |
+| ✅ Library licensing statements (MediatR, AutoMapper, MassTransit v9, FluentAssertions v8) | 1 |
+| ✅ Airbnb's actual fee percentages and cancellation policies (this project uses simplified, illustrative rules) | 1 |
 | Marten's data reset API for tests | 3 |
 | Keycloak realm import and seeding with Aspire | 4 |
 | Partial exclusion constraints with `btree_gist` on the PostgreSQL version used | 6 |

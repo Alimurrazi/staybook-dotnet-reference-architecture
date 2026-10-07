@@ -19,7 +19,8 @@ Staybook.Pricing.Contracts/    What other modules may use: IDs, DTOs, query inte
 
 - **The server always calculates prices.** No command or endpoint accepts a price; clients send a `QuoteId`.
 - Every pricing-plan change increments the **pricing version**.
-- A quote is **immutable** once created: line items, currency, pricing version, owner and expiry. Changing the plan never changes an existing quote.
+- A quote is **immutable** once created: listing, stay, guest count, line items, currency, pricing version, owner and expiry. Changing the plan never changes an existing quote.
+- Weekly discount: a percentage of the nights total for stays of 7 nights or more, applied **before** the cleaning fee.
 - Money is minor units plus currency. Every percentage line is rounded on its own to the minor unit, half away from zero; totals are sums of rounded lines.
 - Invariant: guest pays = host payout + platform revenue. Property tests assert it for any input.
 - The two pricing examples in plan section 5 are tests with their exact numbers. If a change breaks them, the change is wrong.

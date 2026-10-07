@@ -118,7 +118,7 @@ The more interesting part is how they talk. Staybook allows exactly **three form
 | **Command** through contracts (synchronous) | **Only** steps the user waits for, always with a stable operation ID | Booking asks Availability to allocate nights |
 | **Message** (asynchronous) | Everything else | `BookingConfirmed` → Notifications |
 
-The middle row is the one people get wrong. Synchronous commands between modules feel natural, so they spread, and soon every module calls every other module in one long chain. Staybook allows them only where a human is waiting for the answer: allocating nights and authorizing a payment. Everything else is a message. And because a synchronous call can succeed while its response is lost, every command carries an **operation ID** so a retry returns the original result instead of doing the work twice. Article 6 tests exactly that.
+The middle row is the one people get wrong. Synchronous commands between modules feel natural, so they spread, and soon every module calls every other module in one long chain. Staybook allows them only where a human is waiting for the answer: allocating nights and authorizing the payment (or, for instant book, capturing it). Everything else is a message. And because a synchronous call can succeed while its response is lost, every command carries an **operation ID** so a retry returns the original result instead of doing the work twice. Article 6 tests exactly that.
 
 ```mermaid
 flowchart LR
@@ -134,15 +134,15 @@ flowchart LR
     Booking -- "query: quote by QuoteId" --> Pricing
     Booking -- "query: listing details" --> Listings
     Booking == "command: allocate nights" ==> Availability
-    Booking == "command: authorize payment" ==> Payments
+    Booking == "command: authorize (instant book: capture)" ==> Payments
     Booking -. "message: capture, void, refund" .-> Payments
     Payments -. "message: payment outcomes" .-> Booking
     Booking -. "message: BookingConfirmed" .-> Notifications
     Listings -- "query: availability view" --> Availability
-    Identity -. "contracts: ICurrentUser" .- Booking
+    Identity --- |"depends on contracts: ICurrentUser"| Booking
 ```
 
-*Thin arrows are queries, thick arrows are commands, dotted arrows are messages. The full context map, with notes on each relationship, is in [`docs/architecture.md`](../architecture.md).*
+*Thin arrows are queries, thick arrows are commands, dotted arrows are messages. The plain line is not communication at all: Booking depends on Identity's contracts (`ICurrentUser`), as every module will from article 4. The full context map, with notes on each relationship, is in [`docs/architecture.md`](../architecture.md).*
 
 ### Consistency boundaries: a first look
 
@@ -172,7 +172,7 @@ But a monolith *without* boundaries erodes. The day Pricing code reads a Booking
 
 - each module owns one PostgreSQL **schema**, and no module reads another's tables;
 - modules reference each other only through **Contracts** projects;
-- **architecture tests** fail the build when a boundary is crossed (section 5 below).
+- **architecture tests** fail the test run when a boundary is crossed (section 5 below).
 
 What would justify splitting a module out later? Independent scaling, a different release cadence, a separate team, or a failure that must not take the rest down. Article 11 extracts Notifications into its own service, partly to show that the boundaries held and partly to show what extraction really costs.
 
@@ -221,7 +221,7 @@ The setup is shown as decisions; the [README](../../README.md) has the commands.
 ```
 src/
   Staybook.AppHost/          Aspire: starts PostgreSQL, Keycloak and the API
-  Staybook.ServiceDefaults/  OpenTelemetry, health checks, resilience
+  Staybook.ServiceDefaults/  OpenTelemetry, health checks
   Staybook.Api/              Host and composition root
   Staybook.SharedKernel/     Shared types (filled from article 2)
   Modules/
@@ -279,7 +279,7 @@ var postgres = builder.AddPostgres("postgres")
 var database = postgres.AddDatabase("staybook");
 
 // Registered now so the topology is complete; configured in article 4.
-builder.AddKeycloak("keycloak", port: 8080)
+builder.AddKeycloak("keycloak")
     .WithDataVolume("staybook-keycloak-data");
 
 builder.AddProject<Projects.Staybook_Api>("api")
@@ -353,7 +353,7 @@ Empty methods look odd, but they are the seams. Article 3 fills them in, and the
 
 ### Basic observability
 
-`Staybook.ServiceDefaults` is based on the Aspire template: OpenTelemetry for logs, metrics and traces, health checks, service discovery and resilient HTTP clients. Two details are worth pointing out:
+`Staybook.ServiceDefaults` is based on the Aspire template: OpenTelemetry for logs, metrics and traces, and health checks. The template also adds service discovery and resilient HTTP clients; Staybook removed them, because nothing calls another service over HTTP until Stripe in article 9. Two details are worth pointing out:
 
 - **Health probes are filtered out of traces**, or they drown the real requests.
 - **Health endpoints are mapped only in development.** `/health` exposes the database check; exposing it in production is a deployment decision, and deployment has its own series.
@@ -362,9 +362,9 @@ Empty methods look odd, but they are the seams. Article 3 fills them in, and the
 
 ## 5. The tests
 
-Article 1 has no business logic, so it has no business tests. It has something more basic: **architecture tests** that turn the boundaries from this article into rules the build enforces. They use ArchUnitNET with xUnit v3 and Shouldly.
+Article 1 has no business logic, so it has no business tests. It has something more basic: **architecture tests** that turn the boundaries from this article into rules the test run enforces. They use ArchUnitNET with xUnit v3 and Shouldly.
 
-There are 31 of them, in three groups.
+There are 37 of them, in three groups.
 
 **Module boundaries:**
 
@@ -380,9 +380,14 @@ public void A_module_uses_another_module_only_through_its_contracts(string modul
 }
 ```
 
-Alongside it: Contracts never expose another module's implementation (or their own); each module owns a schema named after it; and every folder under `src/Modules` is covered by the tests, so a new module can't quietly escape them.
+Alongside it:
 
-**Layers:** `Domain` depends on no other layer and on no infrastructure framework (Marten, Wolverine, Npgsql, ASP.NET Core, EF Core); `Application` depends on neither `Infrastructure` nor `Endpoints`; the shared kernel depends on no module and no framework.
+- module and Contracts projects may **reference** only the shared kernel and Contracts projects (more on why below);
+- Contracts never expose another module's implementation, or their own;
+- each module declares a schema named after it. Today that only checks the module's `Schema` constant; it becomes a real check in article 3, when modules store their first documents and Marten has to use that schema;
+- every folder under `src/Modules` is covered by the tests, so a new module can't quietly escape them.
+
+**Layers:** `Domain` depends on no other layer and on no infrastructure framework (Marten, Wolverine, Npgsql, ASP.NET Core, EF Core, `Microsoft.Extensions.*` such as logging and configuration, `System.Net.Http`); `Application` depends on neither `Infrastructure` nor `Endpoints`; those two don't depend on each other; the shared kernel depends on no module and no framework. The layer rules find layers by namespace, so the build also requires namespaces to match folders (`IDE0130`): a file in `Domain/` can't hide in another namespace.
 
 **The build guard**, which deserves its own story.
 
@@ -412,23 +417,41 @@ and a test asserts that ArchUnitNET **does** see it:
 public void A_dependency_inside_an_async_method_is_detected()
 {
     var architecture = new ArchLoader().LoadAssemblies(typeof(AsyncCanary).Assembly).Build();
-    var rule = Types().That().Are(typeof(AsyncCanary))
-        .Should().NotDependOnAny(Types().That().Are(typeof(ForbiddenDependency)));
 
-    rule.HasNoViolations(architecture).ShouldBeFalse(
-        "If this rule passes, the architecture tests can't see async code and every boundary rule is unreliable.");
+    Types().That().Are(typeof(AsyncCanary))
+        .Should().DependOnAny(Types().That().Are(typeof(ForbiddenDependency)))
+        .Because("if this isn't seen, the architecture tests can't see async code")
+        .Check(architecture);
 }
 ```
+
+The rule is deliberately **positive** ("should depend on"). My first version asserted that the negative rule ("should not depend on") *fails*. That looks equivalent, but it isn't: a rule whose type filter matches nothing also fails, so if the canary type were ever renamed, the test would keep passing while checking nothing. The positive rule passes only if the canary is found *and* its dependency is seen.
 
 A second guard fails if any analyzed assembly was built with optimizations. Then I tried both ways:
 
 | Run | Result |
 |---|---|
-| `dotnet test` (Debug) | ✅ 31 of 31 pass |
+| `dotnet test` (Debug) | ✅ 37 of 37 pass |
 | `dotnet test -c Release` | ❌ the guard and the canary fail. The bug is real, in our setup |
-| Debug, with a real violation: Listings reads `PricingModule` inside an async method | ❌ `Staybook.Listings.Violation does depend on "Staybook.Pricing.PricingModule" because Listings may use Pricing only through Staybook.Pricing.Contracts` |
+| Debug, with a real violation: Listings uses the `PricingModule` type inside an async method | ❌ `Staybook.Listings.Violation does depend on "Staybook.Pricing.PricingModule" because Listings may use Pricing only through Staybook.Pricing.Contracts` |
 
 A test you have never seen fail is a test you don't know works. These three runs are the evidence.
+
+### A violation the type rules can't see
+
+The review of this article (section 7) found a hole in my own exercise. I had told readers to reference `Staybook.Pricing` from Listings and read `PricingModule.Schema`. That passed every test. `Schema` is a `const`, and the C# compiler copies a const's **value** into the code that uses it. The compiled Listings assembly contains the string `"pricing"` and no trace of `PricingModule`, so there is no dependency for ArchUnitNET to find. Meanwhile the forbidden project reference sits in the `.csproj`, ready for the next, less innocent use.
+
+So one test reads the project files themselves:
+
+```csharp
+var forbidden = ProjectReferences(Path.Combine(RepositoryRoot(), "src", "Modules", module, project, $"{project}.csproj"))
+    .Where(reference => reference != "Staybook.SharedKernel" && !reference.EndsWith(".Contracts", StringComparison.Ordinal))
+    .ToList();
+
+forbidden.ShouldBeEmpty($"{project} may reference only Staybook.SharedKernel and Contracts projects.");
+```
+
+The type rules catch what the code *uses*; this test catches what the project *may* use. You need both.
 
 **One more honest note:** most layers are still empty, so rules like "Domain depends on no framework" have nothing to check yet. They're marked `WithoutRequiringPositiveResults()` for now. The canary is what tells us they'll bite once code arrives in article 2.
 
@@ -477,7 +500,7 @@ Writing these before any code forces you to say what the architecture *is* in pl
 
 Shared with the team, checked into the repo:
 
-- **Allowed without asking:** `dotnet build`, `test`, `format` and `restore`; read-only `git` commands, plus `git add`, `commit` and `switch`; `docker ps` and `logs`; starting the AppHost.
+- **Allowed without asking:** `dotnet build`, `test`, `format` and `restore`; read-only `git` commands (`status`, `diff`, `log`, `show`, `branch --show-current` and `--list`), plus `git add`, `git commit` and `git switch -c` to start a branch; `docker ps` and `logs`; starting the AppHost.
 - **Denied:** reading or editing `.env` files, `secrets.json`, certificates and keys; `git push --force`; `git reset --hard`.
 - **Everything else asks**, including `git push` and `dotnet add package`. Adding a library is a decision, not a keystroke.
 
@@ -518,6 +541,10 @@ A skill isn't a code template. It's a procedure: where the file goes, which ques
 - **`architecture-reviewer`** reads the change against the root and module `CLAUDE.md` files and the plan, and reports violations, risks and suggestions with `file:line`. It can't edit anything; it only reports.
 - **`test-writer`** writes failing tests before the implementation exists: the "red" step of test-driven development. Its job ends when the tests compile and fail *for the right reason*. It's first used in article 2.
 
+Before this article went to its human reviewer, `architecture-reviewer` reviewed the whole branch, and it was worth it. Among fifteen findings, it showed that my "break something on purpose" exercise broke nothing (the `const` story in section 5), that the Stop hook looked for module tests in a folder the plan doesn't use (so it would never have run article 2's tests), that two template packages had arrived ahead of the article that needs them, and that the `git branch *` permission also allowed `git branch -D`. Every finding was checked against the plan before anything changed: twelve applied, two applied in part, and the rest went to the author as decisions.
+
+That's the honest version of "watching the architecture tests catch Claude's first boundary violation". In this article, Claude made no accidental boundary violation for the tests to catch; the violations shown above were deliberate experiments. What the harness did catch were Claude's other mistakes, through the build hook, the Stop hook and the reviewer.
+
 ### MCP servers: none yet
 
 The plan allows MCP servers "only when they earn their place". Nothing has earned it: `git` and `gh` already cover GitHub, and there's no data worth querying. A read-only PostgreSQL server becomes useful once article 3 stores data.
@@ -546,14 +573,14 @@ dotnet run --project src/Staybook.AppHost
 
 | Check | Expected |
 |---|---|
-| `dotnet test` | 31 tests pass |
+| `dotnet test` | 37 tests pass |
 | The Aspire dashboard (open the login URL printed in the console) | `postgres`, `staybook`, `keycloak` and `api` running |
 | `http://localhost:5174/health` | `Healthy` (includes the PostgreSQL check) |
 | `http://localhost:5174/alive` | `Healthy` |
 
 Then break something on purpose:
 
-1. Add a project reference from `Staybook.Listings` to `Staybook.Pricing`, and use `PricingModule.Schema` inside an async method in Listings. Run the tests and read the failure.
+1. Add a project reference from `Staybook.Listings` to `Staybook.Pricing`, and use `typeof(Staybook.Pricing.PricingModule)` inside an async method in Listings. Run the tests: two fail, one for the project reference and one for the type dependency. Then use only `PricingModule.Schema` instead, and see that just the project-reference test fails (section 5 explains why).
 2. Run `dotnet test -c Release` and watch the two guard tests explain why they fail.
 
 **Known limitations of this tag:** there are no features yet besides health checks; there's no authentication (Keycloak runs but isn't configured); there's no CI workflow yet; and Keycloak's Aspire integration is a preview package. The [README](../../README.md) lists them all.

@@ -21,10 +21,10 @@ src/Modules/<Module>/
 ```
 
 - **Layers are folders** (and namespaces) inside the module project. The dependency rule between them is enforced by architecture tests, not by project references.
-- **Contracts are a separate project**, because the compiler then enforces the most important rule: another module can only reference `Staybook.<Module>.Contracts`. Architecture tests check it as well.
+- **Contracts are a separate project**, which makes the most important rule visible in every project file: another module may reference only `Staybook.<Module>.Contracts`. The compiler doesn't enforce it (a reference to another module's main project compiles), so the architecture tests do, twice: one test reads the `ProjectReference`s of every module project, and the type rules check what the code actually uses. Both are needed: a `const` read through a forbidden reference is inlined by the compiler and leaves no type dependency to find.
 - `<Module>Module.cs` is the module's only entry point for the host: `Add<Module>Module()` and `Map<Module>Endpoints()`. It also names the schema the module owns.
 - Shared types go in `Staybook.SharedKernel`, kept deliberately small.
-- Architecture tests (ArchUnitNET) check module boundaries, layers and the shared kernel. They run against **Debug builds only**: ArchUnitNET misses dependencies inside `async` methods in Release builds (TNG/ArchUnitNET#498), which would let negative rules pass silently. A guard test fails if the analyzed assemblies are optimized, and a canary test proves an async dependency is detected.
+- Architecture tests (ArchUnitNET) check module boundaries, layers and the shared kernel. Layers are found by namespace, so namespaces must match folders (`IDE0130` fails the build). They run against **Debug builds only**: ArchUnitNET misses dependencies inside `async` methods in Release builds (TNG/ArchUnitNET#498), which would let negative rules pass silently. A guard test fails if the analyzed assemblies are optimized, and a canary test proves an async dependency is detected.
 
 ## Alternatives considered
 

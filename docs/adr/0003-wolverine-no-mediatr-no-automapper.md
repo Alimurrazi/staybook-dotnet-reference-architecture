@@ -32,6 +32,7 @@ Wolverine 6 ships its runtime code compiler as a separate package, `WolverineFx.
 | MediatR for commands + MassTransit for messaging | Two libraries for one job, two pipelines to configure, and both now commercial or reciprocal-licensed in their current versions |
 | MediatR v12 (last Apache-licensed version) | Frozen; a reference architecture shouldn't start on an unmaintained major version |
 | Hand-written mediator | Possible in ~50 lines, but the outbox, sagas and transports are not; we would still need a messaging library |
+| Static code generation instead of `WolverineFx.RuntimeCompilation` | Pre-generating handler code (`codegen write`, `TypeLoadMode.Static`) avoids the runtime compiler, but every handler change then needs a regeneration step. Right for production builds; too much friction while the series changes handlers every article |
 | AutoMapper or Mapster | Mapping by hand is explicit, refactor-safe and trivially debuggable. The DTOs in this codebase are small; the convenience isn't worth a hidden layer of runtime configuration |
 
 ## Consequences

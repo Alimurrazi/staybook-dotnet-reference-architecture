@@ -65,7 +65,7 @@ Run tests in the default **Debug** configuration. Two architecture tests fail on
 ```
 src/
   Staybook.AppHost/          Aspire: starts PostgreSQL, Keycloak and the API
-  Staybook.ServiceDefaults/  OpenTelemetry, health checks, resilience
+  Staybook.ServiceDefaults/  OpenTelemetry, health checks
   Staybook.Api/              Host and composition root
   Staybook.SharedKernel/     Shared types (filled from article 2)
   Modules/<Module>/          Staybook.<Module> and Staybook.<Module>.Contracts, plus the module's CLAUDE.md

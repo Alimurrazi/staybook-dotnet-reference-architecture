@@ -39,5 +39,5 @@ Marten is MIT-licensed (checked 2026-10-05). Its commercial add-ons (monitoring,
 - One database to run locally (Aspire starts it) and later to back up and operate.
 - Documents, events and the outbox commit atomically.
 - Marten stores documents as JSONB. Querying is LINQ over JSON; complex reporting queries are less natural than with relational tables, which is why search uses a dedicated read model.
-- Marten generates code at runtime, like Wolverine (ADR 3).
+- Marten generates code at runtime, like Wolverine (ADR 3). Marten's own package doesn't bring the runtime compiler; article 3, which registers the first documents, must confirm that `WolverineFx.RuntimeCompilation` covers Marten too.
 - PostgreSQL becomes a hard dependency of every module. That is the trade-off ADR 1 accepted.

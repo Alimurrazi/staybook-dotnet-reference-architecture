@@ -543,7 +543,7 @@ Synchronous commands carry **stable operation IDs**, so a retry after a lost res
 
 Until the outbox exists (article 7), messages are published in-process and can be lost. That is demonstrated by a test and fixed in article 7.
 
-**No module reads another module's tables.** Each module has its own PostgreSQL schema. Architecture tests enforce this.
+**No module reads another module's tables.** Each module has its own PostgreSQL schema. Architecture tests enforce this: from article 1 for project references and type dependencies, and for schemas once modules store documents (article 3).
 
 ### Solution structure (decided in ADR 2)
 
@@ -553,7 +553,7 @@ Until the outbox exists (article 7), messages are published in-process and can b
 ```
 src/
   Staybook.AppHost/              Aspire: PostgreSQL; Keycloak (configured in article 4); Mailpit (article 7); RabbitMQ (article 11)
-  Staybook.ServiceDefaults/      OpenTelemetry, health, resilience defaults
+  Staybook.ServiceDefaults/      OpenTelemetry, health; HTTP resilience from article 9
   Staybook.Api/                  Host and composition root
   Staybook.SharedKernel/         Money, DateRange, Result, base types (kept small)
   Modules/
@@ -594,7 +594,7 @@ Staybook.Pricing/
 | Runtime | .NET 10, ASP.NET Core, Minimal APIs | 1 |
 | Local orchestration | .NET Aspire | 1 |
 | Documents and event store | PostgreSQL + Marten | 1 (registered), 3, 5 |
-| Mediator, messaging, outbox, sagas | Wolverine | 1 (registered), 3, 7, 8 |
+| Mediator, messaging, outbox, sagas | Wolverine (+ `WolverineFx.RuntimeCompilation`, its runtime compiler; ADR 3) | 1 (registered), 3, 7, 8 |
 | Validation | FluentValidation | 3 |
 | Caching (optional) | HybridCache (listing details, pricing plans) | 3 |
 | Identity | Keycloak, JWT bearer | 1 (registered), 4 |
@@ -722,7 +722,7 @@ Staybook.Pricing/
 
 **Tests introduced:** architecture tests (ArchUnitNET).
 
-**Building this with Claude Code:** writing `CLAUDE.md` before any code, and watching architecture tests catch Claude's first boundary violation.
+**Building this with Claude Code:** writing `CLAUDE.md` before any code; proving the architecture tests catch violations with deliberate experiments (Claude made no accidental one in article 1); and the `architecture-reviewer` subagent reviewing the branch before the author does.
 
 **Deliverables:** article text, context map, ADRs 1 to 4, solution skeleton (Listings, Pricing, Identity), complete `.claude/` harness, architecture diagram v1, tag `article-01`.
 
@@ -1439,7 +1439,7 @@ Built completely in article 1 and **explained in detail there** (decision 42), t
 
 | Article | Lesson |
 |---|---|
-| 1 | Writing `CLAUDE.md` first; architecture tests catching violations |
+| 1 | Writing `CLAUDE.md` first; proving architecture tests catch violations; the reviewer subagent before human review |
 | 2 | Test-first domain modeling; catching anemic models and public setters |
 | 3 | Scaffolding with skills; keeping handlers thin |
 | 4 | Finding endpoints without a policy, then making it a permanent convention test |

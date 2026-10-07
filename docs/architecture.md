@@ -10,6 +10,8 @@ Staybook's bounded contexts and how they talk to each other: the target for the 
 - **command** — synchronous call through Contracts, **only** for steps the user waits for, always with a stable operation ID
 - **message** — asynchronous, through Wolverine
 
+The plain lines from Identity are not communication: they show that modules depend on Identity's contracts (`ICurrentUser`).
+
 ```mermaid
 flowchart LR
     Identity["<b>Identity</b><br/>users, roles,<br/>current user"]
@@ -24,14 +26,14 @@ flowchart LR
     Booking -- "query: quote by QuoteId" --> Pricing
     Booking -- "query: listing details" --> Listings
     Booking == "command: allocate nights" ==> Availability
-    Booking == "command: authorize payment" ==> Payments
+    Booking == "command: authorize (instant book: capture)" ==> Payments
     Booking -. "message: capture, void, refund" .-> Payments
     Payments -. "message: payment outcomes" .-> Booking
     Booking -. "message: BookingConfirmed, …" .-> Notifications
     Listings -- "query: availability view (date search)" --> Availability
-    Identity -. "contracts: ICurrentUser" .- Listings
-    Identity -. "contracts: ICurrentUser" .- Pricing
-    Identity -. "contracts: ICurrentUser" .- Booking
+    Identity --- |"depends on contracts: ICurrentUser"| Listings
+    Identity --- |"depends on contracts: ICurrentUser"| Pricing
+    Identity --- |"depends on contracts: ICurrentUser"| Booking
 ```
 
 | Module | Owns | Schema | Introduced |
@@ -47,7 +49,7 @@ flowchart LR
 **Relationship notes:**
 
 - **Listings → Pricing** is a query, not a shared transaction. The race between the check and publication is accepted, tested and documented (article 3).
-- **Booking → Availability and Payments** are the only synchronous commands, because the guest is waiting for the answer. They carry operation IDs so a retry after a lost response is safe (articles 5, 6, 8).
+- **Booking → Availability and Payments** are the only synchronous commands, because the guest is waiting for the answer. For instant book, the capture is synchronous too (decision 23). They carry operation IDs so a retry after a lost response is safe (articles 5, 6, 8).
 - **Listings → Availability** serves search by dates from Availability's view. The view may be stale; allocation is the real check. Article 6 settles the exact mechanism.
 - **Identity** is upstream of everyone: modules depend on its contracts (`ICurrentUser`), never on Keycloak or raw claims (article 4).
 

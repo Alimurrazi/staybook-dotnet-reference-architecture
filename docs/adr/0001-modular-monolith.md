@@ -31,6 +31,6 @@ Build a **modular monolith**: one deployable ASP.NET Core application, one Postg
 
 - One process to run, debug and test; Aspire starts it with PostgreSQL in one command.
 - Modules can be extracted later because they already talk through contracts and messages. Article 11 tests this claim by extracting Notifications.
-- The boundaries exist only as long as they are enforced. Without the architecture tests, a monolith's modules drift into a big ball of mud; with them, a violation fails the build.
+- The boundaries exist only as long as they are enforced. Without the architecture tests, a monolith's modules drift into a big ball of mud; with them, a violation fails the test run.
 - All modules share one runtime: a memory leak or crash in one affects all. That is acceptable at this scale and is one of the reasons article 11 discusses when to split.
 - **What would justify splitting a module out:** independent scaling needs, a different release cadence, a separate team owning it, or a failure that must not take the rest down (notifications must not block bookings).

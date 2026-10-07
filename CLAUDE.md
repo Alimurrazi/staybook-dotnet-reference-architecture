@@ -70,7 +70,8 @@ Each module owns one PostgreSQL schema named after the module (`listings`, `pric
 
 - Wolverine for handlers and messaging, not MediatR. No AutoMapper: map by hand (ADR 3).
 - Marten for documents and events on PostgreSQL (ADR 4).
-- Expected failures return a `Result`; exceptions are for bugs (ADR 7, article 2).
+- Logging through `ILogger<T>` with structured message templates (`"Listing {ListingId} published"`), never string interpolation; exported through OpenTelemetry (ADR 5). The domain never logs. From article 3, follow `docs/logging-conventions.md`. Never log tokens, secrets, card data or personal data.
+- Expected failures return a `Result`; exceptions are for bugs (ADR 8, article 2).
 - Money is minor units plus currency. Never `double`, never `decimal` without a currency.
 - Strongly typed IDs (`ListingId`, not `Guid`).
 - Package versions live only in `Directory.Packages.props`. Never put a `Version` on a `PackageReference`.
@@ -78,7 +79,7 @@ Each module owns one PostgreSQL schema named after the module (`listings`, `pric
 
 ## Testing
 
-- One tool per purpose (plan section 11): xUnit v3, Shouldly, FsCheck, Testcontainers, Alba, ArchUnitNET, Verify, WireMock.Net, k6, Stryker.NET.
+- One tool per purpose (plan section 11): xUnit v3, Shouldly, FsCheck, Testcontainers, Alba, ArchUnitNET, Verify, WireMock.Net, k6, Stryker.NET, FakeTimeProvider (controlled time), FakeLogger (log assertions).
 - Integration tests use real PostgreSQL (Testcontainers), never in-memory fakes.
 - Every bug fix starts with a failing test.
 - Architecture tests analyze **Debug** builds only. ArchUnitNET misses dependencies inside `async` methods in Release builds (issue #498); a guard test enforces this.

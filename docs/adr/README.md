@@ -10,3 +10,4 @@ An ADR is never edited to change its decision. If a decision changes, a new ADR 
 | [2](0002-solution-structure.md) | One project per module plus a Contracts project | 1 | Accepted |
 | [3](0003-wolverine-no-mediatr-no-automapper.md) | Wolverine instead of MediatR; no AutoMapper | 1 | Accepted |
 | [4](0004-marten-on-postgresql.md) | Marten on PostgreSQL for documents and events | 1 | Accepted |
+| [5](0005-logging.md) | Logging with Microsoft.Extensions.Logging and OpenTelemetry | 1 | Accepted |

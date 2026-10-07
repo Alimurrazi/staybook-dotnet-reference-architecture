@@ -186,7 +186,7 @@ Some decisions are cheap to change and some aren't. It's worth saying which is w
 
 ### ADRs as the decision log
 
-Every decision in this article has a short Architecture Decision Record in [`docs/adr/`](../adr/): the context, the decision, the alternatives considered and the consequences. This article starts four:
+Every decision in this article has a short Architecture Decision Record in [`docs/adr/`](../adr/): the context, the decision, the alternatives considered and the consequences. This article starts five:
 
 | ADR | Decision |
 |---|---|
@@ -194,6 +194,7 @@ Every decision in this article has a short Architecture Decision Record in [`doc
 | [2](../adr/0002-solution-structure.md) | One project per module, plus a Contracts project |
 | [3](../adr/0003-wolverine-no-mediatr-no-automapper.md) | Wolverine instead of MediatR; no AutoMapper |
 | [4](../adr/0004-marten-on-postgresql.md) | Marten on PostgreSQL for documents and events |
+| [5](../adr/0005-logging.md) | Logging with `Microsoft.Extensions.Logging` and OpenTelemetry; no Serilog |
 
 ADRs are cheap to write and expensive to skip. Six months from now, "why didn't we just use MediatR?" has a one-page answer, including the licensing facts as they were on the day of the decision.
 
@@ -357,6 +358,10 @@ Empty methods look odd, but they are the seams. Article 3 fills them in, and the
 
 - **Health probes are filtered out of traces**, or they drown the real requests.
 - **Health endpoints are mapped only in development.** `/health` exposes the database check; exposing it in production is a deployment decision, and deployment has its own series.
+
+**Logging** is decided now, because it's already wired: code logs through .NET's own `ILogger<T>`, and OpenTelemetry sends the logs to the same dashboard as the traces and metrics, so every log line carries the trace ID of the request that wrote it. There's no Serilog. Its sinks used to be the reason to add it, and with OpenTelemetry as the export path they aren't needed ([ADR 5](../adr/0005-logging.md)). Logs are structured (`"Listing {ListingId} published"`, never string interpolation), and the domain doesn't log at all: it returns results and records events, and the application layer decides what's worth a log line.
+
+That's all logging needs in article 1. It doesn't get an article of its own; it grows with the problems that need it. Article 3 fixes the conventions (`docs/logging-conventions.md`, source-generated `LoggerMessage` methods, one log entry per command). Article 8 makes an unknown payment outcome impossible to miss. Article 11 follows one booking's logs across two services. Article 13 makes sure no token or guest email ever reaches a log.
 
 ---
 

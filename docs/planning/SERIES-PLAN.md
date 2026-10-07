@@ -155,6 +155,7 @@ Some articles start with the simple version most developers write first. Its wea
 | 43 | **Article 1 creates skeletons only for Listings, Pricing and Identity** | Booking and Payments are added in article 5, Availability in article 6, Notifications in article 7, so no module exists before the domain needs it |
 | 44 | **Each article ships as article text plus repo** | The article draft is written alongside the code and lives in the repo |
 | 45 | **CI deferred to a follow-up** (author's decision, 2026-10-07) | Article 1 ships without a CI workflow. Until it exists, the Claude Code hooks (build after edits, affected tests before stopping) and local `dotnet test` are the only gates |
+| 46 | **Logging through `ILogger` and OpenTelemetry, taught where it's needed** (author's decision, 2026-10-08): the decision in article 1 (ADR 5), conventions in 3, visibility of unknown outcomes in 8, correlation in 11, redaction in 13; FakeLogger, FakeTimeProvider and the redaction library approved | Logging has no Staybook problem of its own, so it gets no separate article; each part appears with the problem that needs it. Production log storage belongs to the deployment series |
 
 ---
 
@@ -604,6 +605,7 @@ Staybook.Pricing/
 | Resilience | Microsoft.Extensions.Http.Resilience | 9 |
 | Broker | RabbitMQ | 11 |
 | Observability | OpenTelemetry, Aspire dashboard | 1 (basic), 11 |
+| Logging | `Microsoft.Extensions.Logging`, structured, exported through OpenTelemetry (ADR 5); redaction with `Microsoft.Extensions.Compliance.Redaction` | 1, 3, 13 |
 | API docs | Built-in OpenAPI + Scalar | 3, 12 |
 
 **Licensing:** Marten and Wolverine are MIT-licensed, with optional commercial add-ons and support from their maintainers. Verify before publishing (section 16).
@@ -616,30 +618,31 @@ Staybook.Pricing/
 | 2 | Solution structure (option A vs B) | 1 |
 | 3 | Wolverine instead of MediatR; no AutoMapper | 1 |
 | 4 | Marten on PostgreSQL for documents and events | 1 |
-| 5 | Aggregate boundaries: Listing and PricingPlan as separate aggregates | 2 |
-| 6 | Money as minor units with currency; rounding rule | 2 |
-| 7 | Result pattern for expected failures, exceptions for bugs | 2 |
-| 8 | Pricing versions and immutable quote snapshots | 2 |
-| 9 | Repository abstraction vs the Marten session directly | 3 |
-| 10 | API conventions, including the `/v1` prefix | 3 |
-| 11 | Search read model updated by in-process event handlers (temporary, until the outbox) | 3 |
-| 12 | Quotes stored by the server; bookings reference a `QuoteId` | 3 |
-| 13 | Keycloak and JWT for identity | 4 |
-| 14 | Authorization model: role policies plus resource-based ownership | 4 |
-| 15 | Event sourcing for Booking only | 5 |
-| 16 | Synchronous cross-module commands only where a user waits, with operation IDs | 5 |
-| 17 | Durable payment operations and explicit outcomes (succeeded, failed, pending, unknown) | 5 |
-| 18 | Availability allocations as the source of truth: partial exclusion constraint, Dapper, DbUp, idempotent by booking ID | 6 |
-| 19 | Durable outbox with local queues before introducing a broker | 7 |
-| 20 | Payment flow: authorize at request, capture at acceptance | 8 |
-| 21 | Hold expiry vs request timeout; convert the hold before capture | 8 |
-| 22 | Resolve unknown outcomes before retrying or compensating | 8 |
-| 23 | Stripe behind an anti-corruption layer, fake gateway by default | 9 |
-| 24 | Payment persistence: record + immutable ledger, written atomically (event-sourced alternative noted) | 10 |
-| 25 | Double-entry ledger, including processing fees | 10 |
-| 26 | Refund rules: fees on the retained subtotal | 10 |
-| 27 | Introducing RabbitMQ and extracting Notifications (a teaching choice) | 11 |
-| 28 | Auditing: command audit trail for every module | 13 |
+| 5 | Logging: Microsoft.Extensions.Logging with OpenTelemetry; no Serilog | 1 |
+| 6 | Aggregate boundaries: Listing and PricingPlan as separate aggregates | 2 |
+| 7 | Money as minor units with currency; rounding rule | 2 |
+| 8 | Result pattern for expected failures, exceptions for bugs | 2 |
+| 9 | Pricing versions and immutable quote snapshots | 2 |
+| 10 | Repository abstraction vs the Marten session directly | 3 |
+| 11 | API conventions, including the `/v1` prefix | 3 |
+| 12 | Search read model updated by in-process event handlers (temporary, until the outbox) | 3 |
+| 13 | Quotes stored by the server; bookings reference a `QuoteId` | 3 |
+| 14 | Keycloak and JWT for identity | 4 |
+| 15 | Authorization model: role policies plus resource-based ownership | 4 |
+| 16 | Event sourcing for Booking only | 5 |
+| 17 | Synchronous cross-module commands only where a user waits, with operation IDs | 5 |
+| 18 | Durable payment operations and explicit outcomes (succeeded, failed, pending, unknown) | 5 |
+| 19 | Availability allocations as the source of truth: partial exclusion constraint, Dapper, DbUp, idempotent by booking ID | 6 |
+| 20 | Durable outbox with local queues before introducing a broker | 7 |
+| 21 | Payment flow: authorize at request, capture at acceptance | 8 |
+| 22 | Hold expiry vs request timeout; convert the hold before capture | 8 |
+| 23 | Resolve unknown outcomes before retrying or compensating | 8 |
+| 24 | Stripe behind an anti-corruption layer, fake gateway by default | 9 |
+| 25 | Payment persistence: record + immutable ledger, written atomically (event-sourced alternative noted) | 10 |
+| 26 | Double-entry ledger, including processing fees | 10 |
+| 27 | Refund rules: fees on the retained subtotal | 10 |
+| 28 | Introducing RabbitMQ and extracting Notifications (a teaching choice) | 11 |
+| 29 | Auditing: command audit trail for every module | 13 |
 
 ---
 
@@ -716,7 +719,7 @@ Staybook.Pricing/
 8. **Solution structure and tooling.** Option B structure; central package management, analyzers, warnings-as-errors, and why each matters.
 9. **Minimal infrastructure.** Aspire with PostgreSQL; Keycloak registered but configured in article 4; Marten and Wolverine registered only.
 10. **Module skeletons.** Listings, Pricing and Identity only (decision 43): Contracts projects, schema per module, module registration; where the first feature will go.
-11. **Basic observability.** OpenTelemetry through ServiceDefaults. (CI, a build-and-test workflow on every PR, is deferred to a follow-up: decision 45.)
+11. **Basic observability.** OpenTelemetry through ServiceDefaults; the logging decision (ADR 5). (CI, a build-and-test workflow on every PR, is deferred to a follow-up: decision 45.)
 12. **Architecture tests.** Enforcing layers and module boundaries from the first commit.
 13. **The Claude Code harness.** A full section (decision 42): every piece in section 12, what it does, how it is attached and why it is there.
 
@@ -724,7 +727,7 @@ Staybook.Pricing/
 
 **Building this with Claude Code:** writing `CLAUDE.md` before any code; proving the architecture tests catch violations with deliberate experiments (Claude made no accidental one in article 1); and the `architecture-reviewer` subagent reviewing the branch before the author does.
 
-**Deliverables:** article text, context map, ADRs 1 to 4, solution skeleton (Listings, Pricing, Identity), complete `.claude/` harness, architecture diagram v1, tag `article-01`.
+**Deliverables:** article text, context map, ADRs 1 to 5, solution skeleton (Listings, Pricing, Identity), complete `.claude/` harness, architecture diagram v1, tag `article-01`.
 
 **Pitfalls to discuss:** designing around technology instead of the domain; starting with microservices; setting up infrastructure before it is needed; a shared kernel that becomes a dumping ground.
 
@@ -818,7 +821,7 @@ flowchart LR
 
 **Building this with Claude Code:** the `test-writer` subagent writes tests first; catching Claude's tendency toward public setters and anemic models.
 
-**Deliverables:** domain of Listings and Pricing, shared kernel value objects, ADRs 5 to 8, tag `article-02`.
+**Deliverables:** domain of Listings and Pricing, shared kernel value objects, ADRs 6 to 9, tag `article-02`.
 
 **Pitfalls to discuss:** primitive obsession; value objects that allow invalid states; rounding the total instead of each line; mutable quotes; aggregates that are too big; domain logic leaking into handlers.
 
@@ -833,17 +836,19 @@ flowchart LR
 1. **The application layer's job.** Use cases as commands and queries; the application orchestrates, the domain decides.
 2. **CQRS with Wolverine.** Commands and queries as messages; handlers as plain methods.
 3. **The request pipeline.** Validation, logging and transactions as middleware. Input validation (FluentValidation) vs domain rules (aggregates): who checks what.
-4. **Persisting aggregates with Marten.** Documents, identity, optimistic concurrency. Repository or the Marten session directly: ADR 9.
+4. **Persisting aggregates with Marten.** Documents, identity, optimistic concurrency. Repository or the Marten session directly: ADR 10.
 5. **API conventions, fixed now.** The `/v1` route prefix, route naming, ProblemDetails (RFC 9457) for every error, error codes, pagination shape, ID and date formats. Written down in `docs/api-conventions.md`.
 6. **Thin endpoints.** Translating HTTP to commands and results to HTTP.
 7. **Calling across modules.** Listings checks Pricing through its contracts before publishing. A test documents the accepted race: if the pricing plan disappears between the check and publication, the listing is published and later quotes fail clearly.
 8. **Stored quotes.** `POST /listings/{id}/quotes` calculates and stores a quote with an ID and expiry; the response returns the `QuoteId`. Clients never send prices back.
 9. **The read side.** Listings and Pricing are documents, not event streams, so Marten's event projections don't apply. Domain events are published **in-process** through Wolverine, and handlers update a denormalized search document (city, capacity, price). Keyset pagination. **Stated openly:** a crash between saving and handling loses a search update; article 7 fixes it.
 10. **Optional: caching.** A short section or repo exercise: HybridCache for listing details and pricing plans, invalidated on change. Not for search results, which already come from an eventually consistent read model.
+11. **Logging conventions, fixed now.** Message templates with named fields, never string interpolation; source-generated `LoggerMessage` methods; what each level means; scopes carrying `ListingId` and `QuoteId`; logging in the Wolverine pipeline (one entry per command, with its outcome). Written down in `docs/logging-conventions.md`, enforced by an analyzer rule.
 
 **Tests introduced:**
 
 - Handler tests and pipeline tests (invalid commands never reach a handler).
+- Log tests (FakeLogger): the pipeline logs each command and its outcome with structured fields.
 - Integration tests against real PostgreSQL with Testcontainers and Alba: create → price → publish → search → quote.
 - A cross-module race test for "publish requires a pricing plan".
 - Search updater tests: given domain events, the search document is correct.
@@ -851,7 +856,7 @@ flowchart LR
 
 **Building this with Claude Code:** scaffolding with `/new-command` and `/new-endpoint`; reviewing that handlers stay thin.
 
-**Deliverables:** Listings and Pricing application layers, search, stored quotes, seed command, `.http` files, API conventions doc, ADRs 9 to 12, tag `article-03` (README notes: no authentication until article 4).
+**Deliverables:** Listings and Pricing application layers, search, stored quotes, seed command, `.http` files, API conventions doc, logging conventions doc, ADRs 10 to 13, tag `article-03` (README notes: no authentication until article 4).
 
 **Pitfalls to discuss:** fat handlers; queries that load aggregates instead of read models; validation in three places; returning domain objects from endpoints; accepting prices from the client.
 
@@ -880,7 +885,7 @@ flowchart LR
 
 **Building this with Claude Code:** asking Claude to find endpoints with no authorization policy, then turning that check into a permanent convention test.
 
-**Deliverables:** Identity module, Keycloak realm export, policies, threat model (Phase 1), ADRs 13 and 14, tag `article-04`, release `phase-1`.
+**Deliverables:** Identity module, Keycloak realm export, policies, threat model (Phase 1), ADRs 14 and 15, tag `article-04`, release `phase-1`.
 
 **Pitfalls to discuss:** checking that a user is logged in but not that they own the resource; role checks scattered across handlers; trusting client-supplied IDs or prices; returning `404` vs `403` and what each reveals.
 
@@ -902,7 +907,7 @@ flowchart LR
 3. **Optimistic concurrency with stream versions.** Two commands on the same booking at once.
 4. **Instant book from a stored quote.** The guest sends a `QuoteId`; the booking checks the quote is unexpired, owned by the guest and matches the listing and stay; the quote becomes the price snapshot.
 5. **A naive availability check.** Check-then-insert against the booking projection, the version most developers write first. A test shows two concurrent requests both passing; article 6 replaces it.
-6. **The payment boundary.** `IPaymentGateway` with authorize, capture and void; **durable payment operations** recorded with a stable ID *before* the call and an outcome *after*; explicit outcomes (succeeded, failed, pending, unknown). Booking calls Payments synchronously through contracts because the guest waits (ADR 16).
+6. **The payment boundary.** `IPaymentGateway` with authorize, capture and void; **durable payment operations** recorded with a stable ID *before* the call and an outcome *after*; explicit outcomes (succeeded, failed, pending, unknown). Booking calls Payments synchronously through contracts because the guest waits (ADR 17).
 7. **The fake gateway and its first failure scenarios.** Configurable decline, provider unavailable, and **success with a lost response**. A test shows the naive handling (timeout treated as failure) leaving money authorized with no booking; article 8 resolves it.
 8. **Projections.** Guest trips, host bookings, booking timeline. Inline vs async.
 9. **Rebuilding projections.** Adding a new projection and replaying existing events into it.
@@ -913,7 +918,7 @@ flowchart LR
 
 **Building this with Claude Code:** plan mode to design events before code; the `test-writer` subagent writing Given/When/Then tests first.
 
-**Deliverables:** Booking and Payments module skeletons and the Booking module, payment boundary with operation records and the fake gateway, projections, ADRs 15 to 17, tag `article-05`.
+**Deliverables:** Booking and Payments module skeletons and the Booking module, payment boundary with operation records and the fake gateway, projections, ADRs 16 to 18, tag `article-05`.
 
 **Pitfalls to discuss:** CRUD-like events (`BookingUpdated`); putting the read model's shape into events; event sourcing everything; treating a timeout as a failure.
 
@@ -952,7 +957,7 @@ flowchart LR
 
 **Building this with Claude Code:** asking Claude to try to break the design with race and lost-response scenarios before writing the fix.
 
-**Deliverables:** Availability module skeleton and module, allocations table and constraint, availability view, ADR 18, tag `article-06`.
+**Deliverables:** Availability module skeleton and module, allocations table and constraint, availability view, ADR 19, tag `article-06`.
 
 **Pitfalls to discuss:** "check then insert" without a constraint; deciding availability from a projection; putting `now()` in a constraint; non-idempotent allocation commands; holds that never expire; using locks where a constraint is simpler.
 
@@ -975,7 +980,7 @@ flowchart LR
 
 **Tests introduced:** crash-in-the-middle tests (stop the process mid-flow; no message lost or processed twice); duplicate-delivery tests.
 
-**Deliverables:** outbox and inbox wiring, durable local queues, Notifications module, ADR 19, tag `article-07`.
+**Deliverables:** outbox and inbox wiring, durable local queues, Notifications module, ADR 20, tag `article-07`.
 
 **Pitfalls to discuss:** publishing after commit; non-idempotent handlers; treating domain events as integration contracts; adding a broker before you need one.
 
@@ -998,14 +1003,15 @@ flowchart LR
 7. **Instant book through the saga.** Fixing article 5's crash-after-capture gap: the saga completes the booking after capture, or refunds.
 8. **Compensation.** Undoing completed steps when a later one definitely fails (for example, capture definitely fails → release the allocation).
 9. **When recovery or compensation keeps failing.** The provider unavailable during recovery; repeated compensation failures; dead-letter and the manual-intervention list (`GET /admin/payment-operations?status=unknown`).
+10. **Making unknown outcomes visible.** A payment operation that turns unknown, or a saga stuck past its deadline, writes a warning with the operation and booking IDs and increments a metric someone can alert on. Logs as part of the design, not an afterthought.
 
 **Failure simulator scenarios added:** authorization pending when the host accepts; capture succeeds but the response is lost; provider unavailable during recovery; compensation repeatedly failing.
 
-**Tests introduced:** saga tests with a controlled clock (expiry, acceptance, decline, accept at the deadline); one executable test per failure-simulator scenario; a crash test for instant book.
+**Tests introduced:** saga tests with a controlled clock (expiry, acceptance, decline, accept at the deadline); one executable test per failure-simulator scenario; a crash test for instant book; log and metric tests for unknown outcomes (FakeLogger).
 
 **Building this with Claude Code:** asking Claude to list every failure path before writing saga code, then turning the list into tests.
 
-**Deliverables:** request-to-book saga, instant-book saga, outcome recovery, ADRs 20 to 22, tag `article-08`, release `phase-2`.
+**Deliverables:** request-to-book saga, instant-book saga, outcome recovery, ADRs 21 to 23, tag `article-08`, release `phase-2`.
 
 **Pitfalls to discuss:** treating timeouts as failures; compensating before knowing what happened; sagas holding too much state; timeouts with `Task.Delay`; a hold that expires before the saga's timeout.
 
@@ -1036,7 +1042,7 @@ flowchart LR
 
 **Building this with Claude Code:** having Claude enumerate payment edge cases before implementation.
 
-**Deliverables:** Stripe adapter, webhooks, payment-state synchronization, ADR 23, tag `article-09`.
+**Deliverables:** Stripe adapter, webhooks, payment-state synchronization, ADR 24, tag `article-09`.
 
 **Pitfalls to discuss:** trusting the client's "payment succeeded"; new idempotency keys on retry; treating webhooks as ordered and unique; forgetting to release a hold when authorization was never sent.
 
@@ -1055,13 +1061,13 @@ flowchart LR
 5. **Cancellations and refunds.** Policy cutoffs against the check-in datetime in the listing's time zone; the cancellation saga (calculate refund → release allocation → refund → post → notify); the 50% Moderate example (section 10); a refund that succeeds but crashes before recording.
 6. **Simulated payouts.** Released 24 hours after check-in; why cancellation after a payout can't happen.
 7. **Basic reconciliation.** Comparing the ledger with Stripe; matched, pending settlement, fee posted, and genuine mismatches.
-8. **Design note: why Payments isn't event-sourced.** A short comparison with an event-sourced Payment aggregate (ADR 24).
+8. **Design note: why Payments isn't event-sourced.** A short comparison with an event-sourced Payment aggregate (ADR 25).
 
 **Failure simulator scenarios added:** refund succeeds but the application crashes before recording it.
 
 **Tests introduced:** property-based tests (the ledger always balances; refunds never exceed payments; cutoffs behave correctly across time zones and daylight saving changes); cancellation saga tests; reconciliation tests with planted fee differences, unsettled funds and genuine mismatches.
 
-**Deliverables:** ledger, cancellation saga, payouts, reconciliation job, earnings endpoint, ADRs 24 to 26, tag `article-10`.
+**Deliverables:** ledger, cancellation saga, payouts, reconciliation job, earnings endpoint, ADRs 25 to 27, tag `article-10`.
 
 **Pitfalls to discuss:** storing balances as mutable numbers; ignoring processing fees; treating settlement delays as mismatches; cutoffs computed in UTC days; editing ledger entries.
 
@@ -1077,14 +1083,14 @@ flowchart LR
 2. **Inspecting and replaying.** Admin endpoints (admin role from article 4) to view and replay dead-lettered messages.
 3. **Projection lag.** Monitoring how far async projections are behind; alerting.
 4. **Event versioning with real history.** By now the event store holds bookings from articles 5 to 10. A concrete change (for example, splitting guest count into adults and children), upcasting old events, and rebuilding projections.
-5. **Distributed tracing.** Following one booking across HTTP, messages, sagas and Stripe calls in the Aspire dashboard.
+5. **Distributed tracing.** Following one booking across HTTP, messages, sagas and Stripe calls in the Aspire dashboard. Logs from the monolith and the extracted Notifications service carry the same trace ID, so one search shows the whole journey.
 6. **Introducing RabbitMQ and extracting Notifications.** Moving Notifications from a durable local queue to its own service over RabbitMQ; what changes and what doesn't. **A teaching choice:** Notifications is the lowest-risk module to extract, not necessarily the first one a real platform would extract.
 
 **Tests introduced:** failure and replay tests; event versioning tests; message contract snapshot tests (Verify).
 
 **Building this with Claude Code:** using traces to have Claude locate where a saga got stuck.
 
-**Deliverables:** dead-letter handling, tracing, lag monitoring, versioned events, RabbitMQ, Notifications service, ADR 27, tag `article-11`, release `phase-3`.
+**Deliverables:** dead-letter handling, tracing, lag monitoring, versioned events, RabbitMQ, Notifications service, ADR 28, tag `article-11`, release `phase-3`.
 
 **Pitfalls to discuss:** infinite retries; renaming events without upcasters; extracting a service without stable contracts; assuming in-process ordering holds over a broker.
 
@@ -1136,13 +1142,14 @@ flowchart LR
 3. **Webhook security revisited.** Signature verification, timestamp tolerance, replay protection.
 4. **OWASP API Security Top 10 across the whole API.**
 5. **Auditing.** A command audit trail for every module (who, what, when, result), recorded by Wolverine middleware. Booking's event stream adds richer history for bookings; the other modules aren't event-sourced, so the audit trail covers them.
-6. **Tool-assisted review and its limits.** What automated security review finds, and why it doesn't replace threat modeling.
+6. **Keeping secrets and personal data out of logs.** Classifying personal data (guest names, emails) and secrets (tokens, keys), redacting them with `Microsoft.Extensions.Compliance.Redaction`, and why logs are not the audit trail.
+7. **Tool-assisted review and its limits.** What automated security review finds, and why it doesn't replace threat modeling.
 
-**Tests introduced:** the access matrix extended to all endpoints; a test for each threat; audit trail tests.
+**Tests introduced:** the access matrix extended to all endpoints; a test for each threat; audit trail tests; redaction tests (tokens and personal data never reach a log).
 
 **Building this with Claude Code:** running `/security-review` on PRs, and comparing its findings with the threat model.
 
-**Deliverables:** complete threat model, audit trail, ADR 28, tag `article-13`.
+**Deliverables:** complete threat model, audit trail, ADR 29, tag `article-13`.
 
 **Pitfalls to discuss:** securing endpoints but not workflows; trusting webhook payloads; audit logs that record too little (or leak personal data).
 
@@ -1379,6 +1386,8 @@ Tests are introduced in the article whose code needs them. Every test runs befor
 | Snapshot tests (OpenAPI, message contracts) | Verify |
 | HTTP fakes and fault injection | WireMock.Net |
 | Payment failure scenarios | The fake gateway's failure simulator (project code, no library) |
+| Controlled time | FakeTimeProvider (`Microsoft.Extensions.TimeProvider.Testing`) |
+| Log assertions | FakeLogger (`Microsoft.Extensions.Diagnostics.Testing`) |
 | Load tests | k6 |
 | Mutation tests | Stryker.NET with `test-runner: mtp` (required for xUnit v3) |
 
@@ -1459,6 +1468,7 @@ Built completely in article 1 and **explained in detail there** (decision 42), t
 - Container images (chiseled, non-root, SBOM)
 - CI/CD for building, publishing and deploying
 - Environments, configuration and cloud secrets
+- Production log storage, retention and alerting
 - Hosting and zero-downtime deploys
 - Schema migrations during deployment
 - Health checks for orchestrators

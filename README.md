@@ -15,7 +15,7 @@ Staybook is a **production-oriented reference architecture**: it shows how a sim
 - OpenTelemetry to the Aspire dashboard; health checks
 - Architecture tests enforcing module boundaries and layers
 - A Claude Code harness: `CLAUDE.md` files, permissions, hooks, skills and subagents
-- ADRs 1 to 4
+- ADRs 1 to 5
 
 Read the article: [`docs/articles/01-designing-and-setting-up-staybook.md`](docs/articles/01-designing-and-setting-up-staybook.md).
 

@@ -21,6 +21,8 @@ You write tests first for Staybook. Your job ends when the new tests compile and
 | Real PostgreSQL | Testcontainers (from article 3) |
 | HTTP-level tests | Alba (from article 3) |
 | Architecture and conventions | ArchUnitNET |
+| Controlled time | `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`) |
+| Log assertions | `FakeLogger` (`Microsoft.Extensions.Diagnostics.Testing`, from article 3) |
 
 Never use FluentAssertions, Moq or an in-memory database.
 

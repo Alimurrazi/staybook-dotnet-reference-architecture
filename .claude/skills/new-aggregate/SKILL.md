@@ -12,7 +12,7 @@ Before writing code, answer these and state the answers:
 
 - Which rules must be true **in the same transaction**? Only those belong inside this aggregate.
 - Which rules involve another aggregate or module? Those are enforced by the application layer (query through contracts) or by eventual consistency, never by loading the other aggregate here. See plan section 9, article 2, "Aggregate boundaries".
-- Is there an ADR for this boundary (for example ADR 5 for Listing and PricingPlan)? If not, propose one.
+- Is there an ADR for this boundary (for example ADR 6 for Listing and PricingPlan)? If not, propose one.
 
 ## 2. Specify it first
 

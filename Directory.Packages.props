@@ -13,6 +13,9 @@
     <PackageVersion Include="Aspire.Npgsql" Version="13.6.1" />
     <PackageVersion Include="Marten" Version="9.47.0" />
     <PackageVersion Include="WolverineFx" Version="6.47.0" />
+    <!-- Wolverine 6 ships its runtime code compiler separately. Without it the host fails
+         to start in the default dynamic code generation mode. -->
+    <PackageVersion Include="WolverineFx.RuntimeCompilation" Version="6.47.0" />
   </ItemGroup>
 
   <ItemGroup Label="Service defaults">

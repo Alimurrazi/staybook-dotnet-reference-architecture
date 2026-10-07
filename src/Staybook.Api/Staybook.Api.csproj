@@ -8,6 +8,7 @@
     <PackageReference Include="Aspire.Npgsql" />
     <PackageReference Include="Marten" />
     <PackageReference Include="WolverineFx" />
+    <PackageReference Include="WolverineFx.RuntimeCompilation" />
   </ItemGroup>
 
 </Project>

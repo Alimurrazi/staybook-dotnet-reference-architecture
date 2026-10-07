@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Xml.Linq;
 using ArchUnitNET.xUnitV3;
 using Shouldly;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
@@ -26,6 +27,23 @@ public class ModuleBoundaryTests
 
         folders.ShouldBe(Modules.Order(StringComparer.Ordinal),
             "Add the new module to StaybookArchitecture.Modules and reference its projects from this test project.");
+    }
+
+    [Theory]
+    [MemberData(nameof(ModuleNames))]
+    public void Module_projects_reference_only_the_shared_kernel_and_contracts(string module)
+    {
+        // The compiler accepts a reference to another module's main project, and a const
+        // read through it leaves no type dependency for the rule below to find. So the
+        // reference itself is checked.
+        foreach (var project in new[] { $"Staybook.{module}", $"Staybook.{module}.Contracts" })
+        {
+            var forbidden = ProjectReferences(Path.Combine(RepositoryRoot(), "src", "Modules", module, project, $"{project}.csproj"))
+                .Where(reference => reference != "Staybook.SharedKernel" && !reference.EndsWith(".Contracts", StringComparison.Ordinal))
+                .ToList();
+
+            forbidden.ShouldBeEmpty($"{project} may reference only Staybook.SharedKernel and Contracts projects.");
+        }
     }
 
     [Theory]
@@ -72,6 +90,12 @@ public class ModuleBoundaryTests
         schema.ShouldBe(module.ToLowerInvariant(),
             "Each module owns one PostgreSQL schema, named after the module, so no two modules share tables.");
     }
+
+    private static IEnumerable<string> ProjectReferences(string projectFile) =>
+        XDocument.Load(projectFile)
+            .Descendants("ProjectReference")
+            .Select(reference => Path.GetFileNameWithoutExtension(
+                reference.Attribute("Include")!.Value.Replace('\\', '/')));
 
     private static string RepositoryRoot()
     {

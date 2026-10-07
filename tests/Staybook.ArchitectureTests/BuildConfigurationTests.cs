@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Reflection;
 using ArchUnitNET.Loader;
+using ArchUnitNET.xUnitV3;
 using Shouldly;
 using Staybook.ArchitectureTests.Canary;
 using static ArchUnitNET.Fluent.ArchRuleDefinition;
@@ -30,11 +31,14 @@ public class BuildConfigurationTests
     public void A_dependency_inside_an_async_method_is_detected()
     {
         var architecture = new ArchLoader().LoadAssemblies(typeof(AsyncCanary).Assembly).Build();
-        var rule = Types().That().Are(typeof(AsyncCanary))
-            .Should().NotDependOnAny(Types().That().Are(typeof(ForbiddenDependency)));
 
-        rule.HasNoViolations(architecture).ShouldBeFalse(
-            "AsyncCanary depends on ForbiddenDependency inside an async method. If this rule passes, "
-            + "the architecture tests can't see async code and every boundary rule is unreliable.");
+        // A positive rule, on purpose: it passes only if AsyncCanary is found AND its
+        // dependency is seen. Asserting that a negative rule fails would also "succeed"
+        // if the canary type stopped matching at all.
+        Types().That().Are(typeof(AsyncCanary))
+            .Should().DependOnAny(Types().That().Are(typeof(ForbiddenDependency)))
+            .Because("AsyncCanary uses ForbiddenDependency inside an async method. If this isn't seen, "
+                + "the architecture tests can't see async code and every boundary rule is unreliable")
+            .Check(architecture);
     }
 }

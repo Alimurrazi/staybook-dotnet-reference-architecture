@@ -46,6 +46,26 @@ public class LayerTests
 
     [Theory]
     [MemberData(nameof(ModuleNames))]
+    public void Infrastructure_and_endpoints_do_not_depend_on_each_other(string module)
+    {
+        var infrastructure = NamespaceAndBelow($"Staybook.{module}.Infrastructure");
+        var endpoints = NamespaceAndBelow($"Staybook.{module}.Endpoints");
+
+        Types().That().ResideInNamespaceMatching(infrastructure)
+            .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching(endpoints))
+            .Because("both are outer adapters; they meet only through the application layer")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+
+        Types().That().ResideInNamespaceMatching(endpoints)
+            .Should().NotDependOnAny(Types().That().ResideInNamespaceMatching(infrastructure))
+            .Because("endpoints translate HTTP to commands; persistence is the handler's business")
+            .WithoutRequiringPositiveResults()
+            .Check(Architecture);
+    }
+
+    [Theory]
+    [MemberData(nameof(ModuleNames))]
     public void Domain_depends_on_no_infrastructure_framework(string module)
     {
         Types().That().ResideInNamespaceMatching(NamespaceAndBelow($"Staybook.{module}.Domain"))

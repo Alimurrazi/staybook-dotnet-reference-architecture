@@ -17,7 +17,14 @@ internal static class StaybookArchitecture
     /// Application or the shared kernel.
     /// </summary>
     public static IReadOnlyList<string> InfrastructureFrameworks { get; } =
-        ["Marten", "Wolverine", "Npgsql", "Microsoft.AspNetCore", "Microsoft.EntityFrameworkCore", "JasperFx"];
+    [
+        "Marten", "Wolverine", "JasperFx", "Npgsql",
+        "Microsoft.AspNetCore", "Microsoft.EntityFrameworkCore",
+        // Logging, configuration, options, dependency injection and hosting: the domain
+        // takes values and returns results; it doesn't log, read settings or resolve services.
+        "Microsoft.Extensions",
+        "System.Net.Http",
+    ];
 
     public static Assembly SharedKernel { get; } = Assembly.Load("Staybook.SharedKernel");
 

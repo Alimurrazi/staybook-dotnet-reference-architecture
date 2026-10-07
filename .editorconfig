@@ -394,7 +394,7 @@ dotnet_naming_style.s_camelcase.capitalization = camel_case
 #### Staybook overrides ####
 # The defaults above come from `dotnet new editorconfig`. The rules below are the ones
 # Staybook enforces: with EnforceCodeStyleInBuild and TreatWarningsAsErrors, a
-# "warning" here fails the build, on a developer's machine, in Claude's build hook and in CI.
+# "warning" here fails the build, on a developer's machine and in Claude's build hook.
 
 [*.cs]
 

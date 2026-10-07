@@ -154,6 +154,7 @@ Some articles start with the simple version most developers write first. Its wea
 | 42 | **Claude Code harness built completely in article 1 and explained in detail there** | Readers see exactly which harness is attached (`CLAUDE.md` files, permissions, hooks, skills, subagents, MCP) and why each piece exists; later articles mention it only where there is a real lesson |
 | 43 | **Article 1 creates skeletons only for Listings, Pricing and Identity** | Booking and Payments are added in article 5, Availability in article 6, Notifications in article 7, so no module exists before the domain needs it |
 | 44 | **Each article ships as article text plus repo** | The article draft is written alongside the code and lives in the repo |
+| 45 | **CI deferred to a follow-up** (author's decision, 2026-10-07) | Article 1 ships without a CI workflow. Until it exists, the Claude Code hooks (build after edits, affected tests before stopping) and local `dotnet test` are the only gates |
 
 ---
 
@@ -715,7 +716,7 @@ Staybook.Pricing/
 8. **Solution structure and tooling.** Option B structure; central package management, analyzers, warnings-as-errors, and why each matters.
 9. **Minimal infrastructure.** Aspire with PostgreSQL; Keycloak registered but configured in article 4; Marten and Wolverine registered only.
 10. **Module skeletons.** Listings, Pricing and Identity only (decision 43): Contracts projects, schema per module, module registration; where the first feature will go.
-11. **Basic observability and CI.** OpenTelemetry through ServiceDefaults; build and test on every PR.
+11. **Basic observability.** OpenTelemetry through ServiceDefaults. (CI, a build-and-test workflow on every PR, is deferred to a follow-up: decision 45.)
 12. **Architecture tests.** Enforcing layers and module boundaries from the first commit.
 13. **The Claude Code harness.** A full section (decision 42): every piece in section 12, what it does, how it is attached and why it is there.
 
@@ -723,7 +724,7 @@ Staybook.Pricing/
 
 **Building this with Claude Code:** writing `CLAUDE.md` before any code, and watching architecture tests catch Claude's first boundary violation.
 
-**Deliverables:** article text, context map, ADRs 1 to 4, solution skeleton (Listings, Pricing, Identity), CI workflow, complete `.claude/` harness, architecture diagram v1, tag `article-01`.
+**Deliverables:** article text, context map, ADRs 1 to 4, solution skeleton (Listings, Pricing, Identity), complete `.claude/` harness, architecture diagram v1, tag `article-01`.
 
 **Pitfalls to discuss:** designing around technology instead of the domain; starting with microservices; setting up infrastructure before it is needed; a shared kernel that becomes a dumping ground.
 
@@ -1362,7 +1363,7 @@ Currency conversion, taxes and VAT, real payouts with Stripe Connect, 3-D Secure
 
 ## 11. Testing strategy
 
-Tests are introduced in the article whose code needs them. CI runs every test on every PR from article 1. **One tool per purpose**; alternatives are mentioned only where the comparison teaches something.
+Tests are introduced in the article whose code needs them. Every test runs before each change is finished (the Stop hook and `dotnet test`); a CI workflow that runs them on every PR is a follow-up (decision 45). **One tool per purpose**; alternatives are mentioned only where the comparison teaches something.
 
 ### Tools
 
@@ -1463,7 +1464,7 @@ Built completely in article 1 and **explained in detail there** (decision 42), t
 - Health checks for orchestrators
 - Backup, restore and disaster recovery
 
-The CI workflow that **builds and runs tests** stays in this series (article 1).
+The CI workflow that **builds and runs tests** stays in this series, as a follow-up (decision 45).
 
 ### Candidates for the companion payment series
 
@@ -1536,6 +1537,7 @@ Stated in article 1 and revisited in article 14:
 - [ ] Prototype the booking and availability transaction boundary, including idempotent allocation and lost-response tests
 - [ ] Create a free Stripe test account (optional until article 9)
 - [ ] Choose the publishing platform (dev.to, Medium, Hashnode or a personal blog)
+- [ ] Follow-up: CI workflow (build and run tests on every PR, in Debug; report vulnerable-package warnings) (decision 45)
 - [ ] Start publishing once Phase 1 is done and the prototype works
 - [ ] After Phase 3: decide on the companion payment series
 

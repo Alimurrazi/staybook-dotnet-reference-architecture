@@ -25,7 +25,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
 
     <!-- Vulnerable-package advisories stay warnings: an advisory published after a tag
-         must not stop readers from building that tag. CI reports them separately. -->
+         must not stop readers from building that tag. They still show in every build. -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <MSBuildWarningsNotAsErrors>$(MSBuildWarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</MSBuildWarningsNotAsErrors>
   </PropertyGroup>

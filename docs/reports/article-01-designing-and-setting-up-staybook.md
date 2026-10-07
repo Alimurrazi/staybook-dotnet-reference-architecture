@@ -1,6 +1,8 @@
-# Designing and setting up Staybook
+# Article 1 report: Designing and setting up Staybook
 
 *Staybook, part 1 of 14 · Phase 1: Build a secure foundation · Code: tag [`article-01`](https://github.com/Alimurrazi/staybook-dotnet-reference-architecture/tree/article-01)*
+
+> **This is the full development report for article 1**: every design decision, setup step, test, mistake and fix, written while building it. The published article is a shorter version drafted from it (see [`docs/articles/`](../articles/)). When the two differ in detail, this report is the complete record.
 
 Most architecture tutorials start with the architecture. They pick Clean Architecture, CQRS and event sourcing on page one, then go looking for a domain to apply them to. The result is usually a to-do list with four layers and a message bus.
 

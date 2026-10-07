@@ -17,7 +17,7 @@ Staybook is a **production-oriented reference architecture**: it shows how a sim
 - A Claude Code harness: `CLAUDE.md` files, permissions, hooks, skills and subagents
 - ADRs 1 to 5
 
-Read the article: [`docs/articles/01-designing-and-setting-up-staybook.md`](docs/articles/01-designing-and-setting-up-staybook.md).
+Read about it: the short article lives in [`docs/articles/`](docs/articles/), and the full development report, with every decision, test and fix, is [`docs/reports/article-01-designing-and-setting-up-staybook.md`](docs/reports/article-01-designing-and-setting-up-staybook.md).
 
 ## Prerequisites
 
@@ -73,7 +73,8 @@ tests/
   Staybook.ArchitectureTests/
 docs/
   adr/                       Architecture Decision Records
-  articles/                  The article text for each tag
+  articles/                  The short articles (the author's draft and Claude's draft)
+  reports/                   The full development report for each article
   architecture.md            Context map and the evolving architecture diagram
   planning/                  The series plan and the reviews that shaped it
 .claude/                     Claude Code harness: settings, hooks, skills, subagents

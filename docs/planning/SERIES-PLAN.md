@@ -153,7 +153,7 @@ Some articles start with the simple version most developers write first. Its wea
 | 41 | **Testing inside every article, one tool per purpose** | Readers learn each technique where the code needs it |
 | 42 | **Claude Code harness built completely in article 1 and explained in detail there** | Readers see exactly which harness is attached (`CLAUDE.md` files, permissions, hooks, skills, subagents, MCP) and why each piece exists; later articles mention it only where there is a real lesson |
 | 43 | **Article 1 creates skeletons only for Listings, Pricing and Identity** | Booking and Payments are added in article 5, Availability in article 6, Notifications in article 7, so no module exists before the domain needs it |
-| 44 | **Each article ships as article text plus repo** | The article draft is written alongside the code and lives in the repo |
+| 44 | **Each article ships as a detailed report, a short article and the repo** (revised 2026-10-08) | After each article's development, Claude writes a full report in `docs/reports/article-NN-*.md` (every decision, test, mistake and fix). The author drafts the short published article from it; Claude also prepares a short draft (`docs/articles/article-NN-claude-draft.md`). The report is the complete record; the article is what readers read |
 | 45 | **CI deferred to a follow-up** (author's decision, 2026-10-07) | Article 1 ships without a CI workflow. Until it exists, the Claude Code hooks (build after edits, affected tests before stopping) and local `dotnet test` are the only gates |
 | 46 | **Logging through `ILogger` and OpenTelemetry, taught where it's needed** (author's decision, 2026-10-08): the decision in article 1 (ADR 5), conventions in 3, visibility of unknown outcomes in 8, correlation in 11, redaction in 13; FakeLogger, FakeTimeProvider and the redaction library approved | Logging has no Staybook problem of its own, so it gets no separate article; each part appears with the problem that needs it. Production log storage belongs to the deployment series |
 
@@ -727,7 +727,7 @@ Staybook.Pricing/
 
 **Building this with Claude Code:** writing `CLAUDE.md` before any code; proving the architecture tests catch violations with deliberate experiments (Claude made no accidental one in article 1); and the `architecture-reviewer` subagent reviewing the branch before the author does.
 
-**Deliverables:** article text, context map, ADRs 1 to 5, solution skeleton (Listings, Pricing, Identity), complete `.claude/` harness, architecture diagram v1, tag `article-01`.
+**Deliverables:** detailed report, short article draft, context map, ADRs 1 to 5, solution skeleton (Listings, Pricing, Identity), complete `.claude/` harness, architecture diagram v1, tag `article-01`.
 
 **Pitfalls to discuss:** designing around technology instead of the domain; starting with microservices; setting up infrastructure before it is needed; a shared kernel that becomes a dumping ground.
 

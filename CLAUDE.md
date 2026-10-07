@@ -13,7 +13,7 @@ An Airbnb-style vacation rental **backend** in ASP.NET Core 10, built step by st
 
 - **Article 1, "Designing and setting up Staybook"**: complete on branch `article-01`, waiting for the author's review before merging and tagging `article-01`. CI is deferred (plan decision 45).
 - Modules that exist: **Listings, Pricing, Identity** (skeletons). Booking and Payments arrive in article 5, Availability in 6, Notifications in 7. Don't create them early.
-- Each article ships as article text (`docs/articles/`) plus code, and is tagged `article-NN`.
+- Each article ships as code, a **detailed report** (`docs/reports/article-NN-*.md`, written by Claude after the development) and a **short article** (`docs/articles/`: the author's draft, plus Claude's short draft `article-NN-claude-draft.md`). Tagged `article-NN`. Never edit the author's own drafts.
 
 ## Commands
 

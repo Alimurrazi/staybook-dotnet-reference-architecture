@@ -52,7 +52,7 @@ if (branch is "master" or "main")
 }
 
 Console.Error.WriteLine(
-    $"The tests pass and {uncommitted.Length} changes on {branch} are uncommitted:\n  "
+    $"No affected tests failed, and {uncommitted.Length} changes on {branch} are uncommitted:\n  "
     + string.Join("\n  ", uncommitted.Take(15))
     + (uncommitted.Length > 15 ? "\n  ..." : "")
     + "\nIf this step is finished, commit it now: stage the files that belong to it and write a "

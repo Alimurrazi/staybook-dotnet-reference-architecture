@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Staybook.SharedKernel\Staybook.SharedKernel.csproj" />
+    <ProjectReference Include="..\Staybook.Pricing.Contracts\Staybook.Pricing.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

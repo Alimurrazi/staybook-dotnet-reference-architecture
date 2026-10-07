@@ -2,6 +2,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Staybook.ServiceDefaults\Staybook.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Modules\Identity\Staybook.Identity\Staybook.Identity.csproj" />
+    <ProjectReference Include="..\Modules\Listings\Staybook.Listings\Staybook.Listings.csproj" />
+    <ProjectReference Include="..\Modules\Pricing\Staybook.Pricing\Staybook.Pricing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

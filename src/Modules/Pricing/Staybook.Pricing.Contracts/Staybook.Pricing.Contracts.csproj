@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The only part of the Pricing module other modules may reference: IDs, DTOs, query and
+       command interfaces, and messages. No domain types and no behavior. -->
+
+</Project>

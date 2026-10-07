@@ -1,7 +1,8 @@
 using Marten;
-
+using Staybook.Identity;
+using Staybook.Listings;
+using Staybook.Pricing;
 using Staybook.ServiceDefaults;
-
 using Wolverine;
 
 // The composition root: it wires infrastructure and registers modules, and holds no
@@ -23,8 +24,16 @@ builder.Services.AddMarten(_ => { })
 // Registered only. Handlers arrive in article 3; durable messaging and the outbox in article 7.
 builder.Host.UseWolverine();
 
+// Each module registers its own services; the host only lists them.
+builder.AddIdentityModule();
+builder.AddListingsModule();
+builder.AddPricingModule();
+
 var app = builder.Build();
 
 app.MapDefaultEndpoints();
+app.MapIdentityEndpoints();
+app.MapListingsEndpoints();
+app.MapPricingEndpoints();
 
 app.Run();

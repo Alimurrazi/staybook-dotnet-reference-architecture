@@ -1,4 +1,18 @@
 <Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Staybook.Identity.Contracts/Staybook.Identity.Contracts.csproj" />
+    <Project Path="src/Modules/Identity/Staybook.Identity/Staybook.Identity.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Listings/">
+    <Project Path="src/Modules/Listings/Staybook.Listings.Contracts/Staybook.Listings.Contracts.csproj" />
+    <Project Path="src/Modules/Listings/Staybook.Listings/Staybook.Listings.csproj" />
+  </Folder>
+  <Folder Name="/src/Modules/Pricing/">
+    <Project Path="src/Modules/Pricing/Staybook.Pricing.Contracts/Staybook.Pricing.Contracts.csproj" />
+    <Project Path="src/Modules/Pricing/Staybook.Pricing/Staybook.Pricing.csproj" />
+  </Folder>
   <Project Path="src/Staybook.Api/Staybook.Api.csproj" />
   <Project Path="src/Staybook.AppHost/Staybook.AppHost.csproj" />
   <Project Path="src/Staybook.ServiceDefaults/Staybook.ServiceDefaults.csproj" />

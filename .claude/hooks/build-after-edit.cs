@@ -52,7 +52,7 @@ var errors = output.Split('\n')
     .Where(line => line.Contains("error", StringComparison.OrdinalIgnoreCase))
     .Select(line => line.Trim())
     .Distinct()
-    .Take(30)
+    .Take(10)
     .ToList();
 
 Console.Error.WriteLine($"Build failed after editing {relative} ({Path.GetFileName(target)}):");

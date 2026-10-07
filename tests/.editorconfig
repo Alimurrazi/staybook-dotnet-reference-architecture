@@ -1,0 +1,7 @@
+# Applies to test projects only, on top of the root .editorconfig.
+
+[*.cs]
+
+# Test names are sentences with underscores (Publishing_without_a_pricing_plan_fails),
+# so a failing test reads as the broken rule. Production code keeps CA1707.
+dotnet_diagnostic.CA1707.severity = none

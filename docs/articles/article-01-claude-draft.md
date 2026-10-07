@@ -94,14 +94,7 @@ A second surprise came from review. Reading a `const` from another module leaves
 
 ## Built with Claude Code
 
-Staybook is built with Claude Code, and the harness is part of the repo:
-
-- **`CLAUDE.md` files**, written before any code, state the rules in plain words: one at the root, one per module.
-- **Hooks**, written in C#, block edits to generated code and secrets, build after every edit, and run the affected tests before Claude finishes.
-- **Skills** scaffold value objects, aggregates, commands and endpoints with the rules built in.
-- **Subagents:** a test writer that works test-first, and an architecture reviewer that went through this whole article's branch before the author did.
-
-The idea in one line: **`CLAUDE.md` guides; tests, analyzers and hooks enforce.** One lesson along the way: two hooks that asked for commits were removed, because a hook can't tell whose changes are uncommitted. A hook should only enforce what it can judge correctly every time.
+Staybook is built with Claude Code, and the harness that keeps it on track (`CLAUDE.md` files, permissions, hooks, skills and subagents) is part of the repo. It gets its own article: [Building Staybook with Claude Code](article-01b-claude-draft.md).
 
 ## Try it
 

@@ -44,6 +44,7 @@ A 14-article series in four phases that builds an **Airbnb-style vacation rental
 | Phase | # | Article |
 |---|---|---|
 | **1. Build a secure foundation** | 1 | Designing and setting up Staybook |
+| | 1b | Building Staybook with Claude Code (the AI harness; no new code) |
 | | 2 | Domain modeling with DDD |
 | | 3 | CQRS and the application layer |
 | | 4 | Authentication and authorization |
@@ -151,11 +152,12 @@ Some articles start with the simple version most developers write first. Its wea
 | 39 | **Keycloak, JWT, role policies and resource-based ownership in article 4**, with seeded host, guest and admin users | Every Phase 1 endpoint is protected before release |
 | 40 | **Auditing through a command audit trail for every module** (article 13) | Only Booking is event-sourced |
 | 41 | **Testing inside every article, one tool per purpose** | Readers learn each technique where the code needs it |
-| 42 | **Claude Code harness built completely in article 1 and explained in detail there** | Readers see exactly which harness is attached (`CLAUDE.md` files, permissions, hooks, skills, subagents, MCP) and why each piece exists; later articles mention it only where there is a real lesson |
+| 42 | **Claude Code harness built completely in article 1 and explained in detail in article 1b** (revised 2026-10-08, decision 47) | Readers see exactly which harness is attached (`CLAUDE.md` files, permissions, hooks, skills, subagents, MCP) and why each piece exists; later articles mention it only where there is a real lesson |
 | 43 | **Article 1 creates skeletons only for Listings, Pricing and Identity** | Booking and Payments are added in article 5, Availability in article 6, Notifications in article 7, so no module exists before the domain needs it |
 | 44 | **Each article ships as a detailed report, a short article and the repo** (revised 2026-10-08) | After each article's development, Claude writes a full report in `docs/reports/article-NN-*.md` (every decision, test, mistake and fix). The author drafts the short published article from it; Claude also prepares a short draft (`docs/articles/article-NN-claude-draft.md`). The report is the complete record; the article is what readers read |
 | 45 | **CI deferred to a follow-up** (author's decision, 2026-10-07) | Article 1 ships without a CI workflow. Until it exists, the Claude Code hooks (build after edits, affected tests before stopping) and local `dotnet test` are the only gates |
 | 46 | **Logging through `ILogger` and OpenTelemetry, taught where it's needed** (author's decision, 2026-10-08): the decision in article 1 (ADR 5), conventions in 3, visibility of unknown outcomes in 8, correlation in 11, redaction in 13; FakeLogger, FakeTimeProvider and the redaction library approved | Logging has no Staybook problem of its own, so it gets no separate article; each part appears with the problem that needs it. Production log storage belongs to the deployment series |
+| 47 | **Article 1b: the Claude Code harness as its own short article** (author's decision, 2026-10-08) | Article 1 covers the architecture, tools and setup decisions; 1b covers the AI harness. Numbered 1b so articles 2 to 14 keep their numbers; it ships with tag `article-01` because it adds no code. One detailed report still covers both |
 
 ---
 
@@ -721,7 +723,7 @@ Staybook.Pricing/
 10. **Module skeletons.** Listings, Pricing and Identity only (decision 43): Contracts projects, schema per module, module registration; where the first feature will go.
 11. **Basic observability.** OpenTelemetry through ServiceDefaults; the logging decision (ADR 5). (CI, a build-and-test workflow on every PR, is deferred to a follow-up: decision 45.)
 12. **Architecture tests.** Enforcing layers and module boundaries from the first commit.
-13. **The Claude Code harness.** A full section (decision 42): every piece in section 12, what it does, how it is attached and why it is there.
+13. **The Claude Code harness.** One paragraph and a link: the harness has its own article, 1b (decision 47).
 
 **Tests introduced:** architecture tests (ArchUnitNET).
 
@@ -730,6 +732,27 @@ Staybook.Pricing/
 **Deliverables:** detailed report, short article draft, context map, ADRs 1 to 5, solution skeleton (Listings, Pricing, Identity), complete `.claude/` harness, architecture diagram v1, tag `article-01`.
 
 **Pitfalls to discuss:** designing around technology instead of the domain; starting with microservices; setting up infrastructure before it is needed; a shared kernel that becomes a dumping ground.
+
+---
+
+#### Article 1b: Building Staybook with Claude Code
+
+**Goal:** readers see the complete AI harness that built Staybook, what each piece does, how it's attached, and why: `CLAUDE.md` guides; tests, analyzers and hooks enforce. No new code; it ships with tag `article-01` (decision 47).
+
+**Sections**
+
+1. **The idea.** Instructions are suggestions; a failing build isn't.
+2. **`CLAUDE.md` files**, root and per module, written before any code.
+3. **Permissions:** allowed, denied, and everything else asks (including adding a package).
+4. **Hooks as C# file-based apps:** guard edits, build after edits, run affected tests before stopping; the loop guard; the commit hooks that were removed, and why.
+5. **Skills:** procedures, not templates.
+6. **Subagents:** `test-writer` and `architecture-reviewer`, with the review of article 1 as the worked example.
+7. **MCP servers:** none yet, and why.
+8. **The working loop** and how readers can use or ignore the harness.
+
+**Deliverables:** short article draft (the article 1 report covers 1b in its section 7).
+
+**Pitfalls to discuss:** rules that only live in a prompt; hooks that enforce what they can't judge; permissions that look read-only but aren't; trusting a reviewer's report without checking it.
 
 ---
 
@@ -1430,7 +1453,7 @@ Tests are introduced in the article whose code needs them. Every test runs befor
 
 ## 12. Claude Code harness
 
-Built completely in article 1 and **explained in detail there** (decision 42), then documented in the repo. `CLAUDE.md` guides; tests, analyzers and hooks enforce. Articles mention Claude Code only when there is a real development lesson.
+Built completely in article 1 and **explained in detail in article 1b** (decisions 42 and 47), then documented in the repo. `CLAUDE.md` guides; tests, analyzers and hooks enforce. Articles mention Claude Code only when there is a real development lesson.
 
 | Piece | Location | What it holds |
 |---|---|---|
@@ -1448,7 +1471,8 @@ Built completely in article 1 and **explained in detail there** (decision 42), t
 
 | Article | Lesson |
 |---|---|
-| 1 | Writing `CLAUDE.md` first; proving architecture tests catch violations; the reviewer subagent before human review |
+| 1 | Proving architecture tests catch violations with deliberate experiments |
+| 1b | The whole harness: `CLAUDE.md` first, permissions, hooks, skills, subagents; the reviewer subagent before human review |
 | 2 | Test-first domain modeling; catching anemic models and public setters |
 | 3 | Scaffolding with skills; keeping handlers thin |
 | 4 | Finding endpoints without a policy, then making it a permanent convention test |
@@ -1511,7 +1535,7 @@ Stated in article 1 and revisited in article 14:
 | Risk | Mitigation |
 |---|---|
 | The series becomes a technology showcase | Every article explains the problem first, the alternatives, and when not to use the pattern |
-| Article 1 is too long after the merge | Discovery follows one scenario; setup is shown as decisions, with steps in the README. The harness section stays in article 1 (decision 42). If the draft still runs long, nothing is cut: the author reviews it and decides |
+| Article 1 is too long after the merge | Discovery follows one scenario; setup is shown as decisions, with steps in the README. The harness moved to its own article, 1b (decision 47). Each article has a full report plus short drafts, and nothing in the report is cut: the author decides what the published version keeps |
 | An article takes longer to build than a week | Keep at least one phase built ahead; buffer weeks; passing tests are the release criteria |
 | Articles become too long | Caching optional in article 3; versioning in 11; cancellations in 10; advanced payments in the companion series |
 | Article 2 feels abstract because nothing runs yet | Keep it test-driven so every concept has a passing test; end with a teaser of article 3's API |

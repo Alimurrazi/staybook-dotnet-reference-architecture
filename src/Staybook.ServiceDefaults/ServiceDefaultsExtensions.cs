@@ -11,9 +11,10 @@ using OpenTelemetry.Trace;
 namespace Staybook.ServiceDefaults;
 
 /// <summary>
-/// Cross-cutting defaults every Staybook host gets: OpenTelemetry (logs, metrics, traces),
-/// health checks, service discovery and resilient HTTP clients. Based on the Aspire
-/// service defaults template.
+/// Cross-cutting defaults every Staybook host gets: OpenTelemetry (logs, metrics, traces)
+/// and health checks. Based on the Aspire service defaults template, without its service
+/// discovery and HTTP resilience: nothing calls another service over HTTP until Stripe
+/// in article 9, which adds resilience where it's needed.
 /// </summary>
 public static class ServiceDefaultsExtensions
 {
@@ -25,13 +26,6 @@ public static class ServiceDefaultsExtensions
     {
         builder.ConfigureOpenTelemetry();
         builder.AddDefaultHealthChecks();
-
-        builder.Services.AddServiceDiscovery();
-        builder.Services.ConfigureHttpClientDefaults(http =>
-        {
-            http.AddStandardResilienceHandler();
-            http.AddServiceDiscovery();
-        });
 
         return builder;
     }

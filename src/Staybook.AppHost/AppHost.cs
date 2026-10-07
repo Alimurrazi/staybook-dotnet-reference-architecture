@@ -13,7 +13,9 @@ var database = postgres.AddDatabase("staybook");
 
 // Registered now so the topology is complete; the realm, users and token validation
 // are configured in article 4. The API doesn't reference it yet.
-builder.AddKeycloak("keycloak", port: 8080)
+// No fixed port yet, so it can't clash with anything on 8080; article 4 decides whether
+// a stable issuer URL needs one.
+builder.AddKeycloak("keycloak")
     .WithDataVolume("staybook-keycloak-data");
 
 builder.AddProject<Projects.Staybook_Api>("api")

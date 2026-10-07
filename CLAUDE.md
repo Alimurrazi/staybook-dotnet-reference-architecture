@@ -89,7 +89,7 @@ Each module owns one PostgreSQL schema named after the module (`listings`, `pric
 |---|---|---|
 | This file and module `CLAUDE.md` files | Repo root, each module folder | Rules Claude reads; module files load when Claude works in that folder |
 | Permissions | `.claude/settings.json` | Allowed `dotnet`/`git`/`docker` commands; secrets are denied |
-| Hooks | `.claude/hooks/*.cs`, wired in `.claude/settings.json` | Block protected edits; build after edits; remind to commit when uncommitted work grows; before stopping, run affected tests and ask for a commit of finished work |
+| Hooks | `.claude/hooks/*.cs`, wired in `.claude/settings.json` | Block protected edits; build after edits; run affected tests before stopping |
 | Skills | `.claude/skills/` | `/new-value-object`, `/new-aggregate`, `/new-command`, `/new-endpoint` |
 | Subagents | `.claude/agents/` | `architecture-reviewer`, `test-writer` |
 

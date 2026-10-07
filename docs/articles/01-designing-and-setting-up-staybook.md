@@ -512,16 +512,16 @@ Hooks are commands Claude Code runs at fixed points. Staybook's are **C# file-ba
 |---|---|---|
 | `guard-edits.cs` | Before any file edit | Blocks edits to generated code (`bin/`, `obj/`, `*.g.cs`, Marten and Wolverine generated code), to DbUp scripts git already tracks (a database may have run them; add a new script instead), and to secrets |
 | `build-after-edit.cs` | After any C# or MSBuild edit | Fixes whitespace in the file, then builds the owning project. With warnings as errors, analyzer and style problems surface here, and the errors go straight back to Claude |
-| `commit-reminder.cs` | After any edit | Once uncommitted work passes 12 files or 400 lines, adds one note asking for a commit at the next green point. Silent until the next commit |
-| `finish-step.cs` | When Claude is about to stop | Runs the tests affected by the branch's changes. If they fail, Claude keeps working. If they pass but work is uncommitted, Claude must commit the finished step (never on `master`, never a push) or say why not |
+| `test-before-stop.cs` | When Claude is about to stop | Runs the tests affected by the branch's changes. If they fail, Claude keeps working and gets the failures |
 
-The Stop hook guards against loops: if Claude is already continuing because of the hook, it lets Claude stop, so a test it can't fix, or a question it needs to ask you, never turns into an endless cycle.
+The Stop hook guards against loops: if Claude is already continuing because of the hook, it lets Claude stop, so a test it can't fix never turns into an endless cycle.
 
 They earned their place while building this very article:
 
 - The build hook caught a mistake of mine within seconds: I registered the three modules in `Program.cs` and the `using` directives didn't land. Six errors, fixed before I moved on.
 - It also exposed a bad formatting default (a blank line between every `using` group) the first time it reformatted a file.
-- The Stop hook refused to let me stop with an uncommitted module folder. I was deliberately mid-step, said so, and it let me stop on the next try.
+
+And one hook didn't. For a while the harness had two **commit hooks**: one reminded Claude to commit once uncommitted work grew past 12 files or 400 lines, and the Stop hook also refused to finish while finished work was uncommitted. They did their job, and the history is a clean series of steps. But a hook can't tell *whose* changes are uncommitted. When the author started drafting their own text in the repo, the Stop hook complained about that file at every single stop. Both were removed; committing each finished step is now a rule in `CLAUDE.md`, not a gate. The lesson: a hook should enforce only what it can judge correctly every time. Builds and tests qualify. "Is this work finished, and is it mine?" doesn't.
 
 ### Skills: scaffolding with the rules built in
 

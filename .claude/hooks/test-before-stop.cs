@@ -1,17 +1,12 @@
-// Stop hook. Before Claude reports that it is done, two checks run in order. Exit code 2
-// keeps Claude working and sends the reason back as its next instruction.
+// Stop hook. Before Claude reports that it is done, run the tests affected by the changes
+// on this branch. Exit code 2 keeps Claude working and sends the failures back.
 //
-// 1. Tests: run the tests affected by the changes on this branch.
-//    - Affected: a module's own test project, plus the architecture tests for any source
-//      change. Shared code (SharedKernel, Api, ServiceDefaults, build files) runs everything.
-//    - The last passing state is cached in .claude/.cache, so stopping twice without new
-//      changes doesn't rerun the tests.
-// 2. Commit: if the tests pass and work is still uncommitted, ask Claude to commit the
-//    finished step with a descriptive message (never on master, never a push).
-//
-// stop_hook_active is true when Claude is already continuing because of this hook. Then
-// the hook lets Claude stop, so a test it can't fix, or a step it has deliberately left
-// open to ask the author something, never becomes an endless loop.
+// - Affected: a module's own test project, plus the architecture tests for any source
+//   change. Shared code (SharedKernel, Api, ServiceDefaults, build files) runs everything.
+// - The last passing state is cached in .claude/.cache, so stopping twice without new
+//   changes doesn't rerun the tests.
+// - stop_hook_active is true when Claude is already continuing because of this hook; then
+//   it lets Claude stop, so a test it can't fix never becomes an endless loop.
 
 using System.Diagnostics;
 using System.Security.Cryptography;
@@ -35,31 +30,7 @@ if (RunAffectedTests(projectDir) is { } failures)
     return 2;
 }
 
-var uncommitted = Git(projectDir, "status", "--porcelain")
-    .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-if (uncommitted.Length == 0)
-{
-    return 0;
-}
-
-var branch = Git(projectDir, "branch", "--show-current").Trim();
-if (branch is "master" or "main")
-{
-    Console.Error.WriteLine(
-        $"There are {uncommitted.Length} uncommitted changes on {branch}. Work happens on an article branch: "
-        + "create one (for example `git switch -c article-NN`) and commit there, or tell the author why not.");
-    return 2;
-}
-
-Console.Error.WriteLine(
-    $"No affected tests failed, and {uncommitted.Length} changes on {branch} are uncommitted:\n  "
-    + string.Join("\n  ", uncommitted.Take(15))
-    + (uncommitted.Length > 15 ? "\n  ..." : "")
-    + "\nIf this step is finished, commit it now: stage the files that belong to it and write a "
-    + "conventional commit message (`feat:`, `test:`, `docs:`, `chore:`) that says what the step does. "
-    + "Don't push. If the step is deliberately unfinished because you are asking the author something, "
-    + "say so and stop.");
-return 2;
+return 0;
 
 // Returns the failure output, or null when nothing failed or nothing needed testing.
 static string? RunAffectedTests(string projectDir)

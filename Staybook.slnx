@@ -1,2 +1,6 @@
 <Solution>
+  <Project Path="src/Staybook.Api/Staybook.Api.csproj" />
+  <Project Path="src/Staybook.AppHost/Staybook.AppHost.csproj" />
+  <Project Path="src/Staybook.ServiceDefaults/Staybook.ServiceDefaults.csproj" />
+  <Project Path="src/Staybook.SharedKernel/Staybook.SharedKernel.csproj" />
 </Solution>

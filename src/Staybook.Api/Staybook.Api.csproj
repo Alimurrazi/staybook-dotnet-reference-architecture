@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Staybook.ServiceDefaults\Staybook.ServiceDefaults.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql" />
+    <PackageReference Include="Marten" />
+    <PackageReference Include="WolverineFx" />
+  </ItemGroup>
+
+</Project>

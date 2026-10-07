@@ -1,0 +1,20 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.6.1">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UserSecretsId>staybook-apphost</UserSecretsId>
+    <!-- ASPIRE010: the orchestrator and dashboard come from NuGet packages instead of a
+         separately installed Aspire CLI, so `dotnet run` is all a reader needs. -->
+    <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Staybook.Api\Staybook.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.Keycloak" />
+  </ItemGroup>
+
+</Project>

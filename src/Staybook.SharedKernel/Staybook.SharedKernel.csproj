@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Types shared by every module: Money, DateRange, Result, base types (from article 2).
+       Kept deliberately small; a type moves here only when two modules genuinely need it. -->
+
+</Project>

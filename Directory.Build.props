@@ -12,6 +12,8 @@
     <!-- A warning nobody has to fix is a warning nobody reads. Every warning fails the
          build, so the codebase never collects them. -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- The same for warnings raised by MSBuild targets (SDKs, Aspire), not only the compiler. -->
+    <MSBuildTreatWarningsAsErrors>true</MSBuildTreatWarningsAsErrors>
 
     <!-- The .NET analyzers at their recommended level, plus the .editorconfig style rules
          enforced during the build, not only in the IDE. -->
@@ -25,5 +27,6 @@
     <!-- Vulnerable-package advisories stay warnings: an advisory published after a tag
          must not stop readers from building that tag. CI reports them separately. -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <MSBuildWarningsNotAsErrors>$(MSBuildWarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</MSBuildWarningsNotAsErrors>
   </PropertyGroup>
 </Project>

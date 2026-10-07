@@ -13,7 +13,6 @@
     <PackageVersion Include="Aspire.Npgsql" Version="13.6.1" />
     <PackageVersion Include="Marten" Version="9.47.0" />
     <PackageVersion Include="WolverineFx" Version="6.47.0" />
-    <PackageVersion Include="WolverineFx.Marten" Version="6.47.0" />
   </ItemGroup>
 
   <ItemGroup Label="Service defaults">

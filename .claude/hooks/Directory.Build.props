@@ -1,0 +1,8 @@
+<Project>
+  <!-- Hooks are standalone file-based apps. This file stops MSBuild from importing the
+       repo's Directory.Build.props (analyzers, warnings as errors) into them. -->
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,6 @@
+<Project>
+  <!-- Hooks use no packages; opt out of the repo's central package management. -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+</Project>

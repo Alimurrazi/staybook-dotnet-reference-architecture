@@ -1,0 +1,162 @@
+// Stop hook. Before Claude reports that it is done, run the tests affected by the
+// changes on this branch. Exit code 2 keeps Claude working and sends the failures back.
+//
+// - Affected: a module's own test project, plus the architecture tests for any source
+//   change. Shared code (SharedKernel, Api, ServiceDefaults, build files) runs everything.
+// - The last passing state is cached in .claude/.cache, so stopping twice without new
+//   changes doesn't rerun the tests.
+// - stop_hook_active is true when Claude is already continuing because of this hook;
+//   then it lets Claude stop, so a test it can't fix never becomes an endless loop.
+
+using System.Diagnostics;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+
+var input = JsonDocument.Parse(Console.In.ReadToEnd()).RootElement;
+if (input.TryGetProperty("stop_hook_active", out var active) && active.GetBoolean())
+{
+    return 0;
+}
+
+var projectDir = Environment.GetEnvironmentVariable("CLAUDE_PROJECT_DIR")
+    ?? (input.TryGetProperty("cwd", out var cwd) ? cwd.GetString() : null)
+    ?? Directory.GetCurrentDirectory();
+
+if (!File.Exists(Path.Combine(projectDir, "Staybook.slnx")))
+{
+    return 0;
+}
+
+// Changes on this branch: committed since it left master, staged, unstaged and untracked.
+var mergeBase = Git(projectDir, "merge-base", "HEAD", "master").Trim();
+var changed = new HashSet<string>(StringComparer.Ordinal);
+if (mergeBase.Length > 0)
+{
+    AddLines(changed, Git(projectDir, "diff", "--name-only", mergeBase));
+}
+
+AddLines(changed, Git(projectDir, "diff", "--name-only", "HEAD"));
+AddLines(changed, Git(projectDir, "ls-files", "--others", "--exclude-standard"));
+
+var codeChanges = changed.Where(IsCode).ToList();
+if (codeChanges.Count == 0)
+{
+    return 0;
+}
+
+var cacheFile = Path.Combine(projectDir, ".claude", ".cache", "last-green");
+var state = Fingerprint(projectDir, codeChanges);
+if (File.Exists(cacheFile) && File.ReadAllText(cacheFile) == state)
+{
+    return 0;
+}
+
+var testProjects = AffectedTestProjects(projectDir, codeChanges);
+if (testProjects.Count == 0)
+{
+    return 0;
+}
+
+var failures = new StringBuilder();
+foreach (var testProject in testProjects)
+{
+    var (exitCode, output) = Run(projectDir, "dotnet", "test", "--project", testProject);
+    if (exitCode != 0)
+    {
+        failures.AppendLine($"--- {testProject} ---");
+        failures.AppendLine(Tail(output, 60));
+    }
+}
+
+if (failures.Length == 0)
+{
+    Directory.CreateDirectory(Path.GetDirectoryName(cacheFile)!);
+    File.WriteAllText(cacheFile, state);
+    return 0;
+}
+
+Console.Error.WriteLine("Tests affected by your changes are failing. Fix them before finishing:");
+Console.Error.WriteLine(failures.ToString());
+return 2;
+
+static bool IsCode(string path) =>
+    (path.StartsWith("src/", StringComparison.Ordinal) || path.StartsWith("tests/", StringComparison.Ordinal)
+        || !path.Contains('/'))
+    && Path.GetExtension(path) is ".cs" or ".csproj" or ".props" or ".targets" or ".slnx" or ".json";
+
+static List<string> AffectedTestProjects(string projectDir, List<string> changes)
+{
+    var all = Directory.Exists(Path.Combine(projectDir, "tests"))
+        ? Directory.GetFiles(Path.Combine(projectDir, "tests"), "*.csproj", SearchOption.AllDirectories)
+            .Select(f => Path.GetRelativePath(projectDir, f).Replace('\\', '/'))
+            .Order(StringComparer.Ordinal)
+            .ToList()
+        : [];
+
+    var runEverything = changes.Any(c => !c.StartsWith("src/Modules/", StringComparison.Ordinal)
+        && !c.StartsWith("tests/", StringComparison.Ordinal));
+    if (runEverything)
+    {
+        return all;
+    }
+
+    var affected = new SortedSet<string>(StringComparer.Ordinal);
+    foreach (var change in changes)
+    {
+        var parts = change.Split('/');
+        if (parts is ["src", "Modules", var module, ..])
+        {
+            affected.UnionWith(all.Where(t => t.StartsWith($"tests/Modules/{module}/", StringComparison.Ordinal)));
+            affected.UnionWith(all.Where(t => t.StartsWith("tests/Staybook.ArchitectureTests/", StringComparison.Ordinal)));
+        }
+        else if (parts is ["tests", ..])
+        {
+            affected.UnionWith(all.Where(t => change.StartsWith(Path.GetDirectoryName(t)!.Replace('\\', '/') + "/", StringComparison.Ordinal)));
+        }
+    }
+
+    return [.. affected];
+}
+
+static string Fingerprint(string projectDir, List<string> changes)
+{
+    var builder = new StringBuilder(Git(projectDir, "rev-parse", "HEAD"));
+    foreach (var change in changes.Order(StringComparer.Ordinal))
+    {
+        var full = Path.Combine(projectDir, change);
+        builder.Append(change).Append(':').Append(File.Exists(full) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(full))) : "deleted");
+    }
+
+    return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString())));
+}
+
+static void AddLines(HashSet<string> set, string text)
+{
+    foreach (var line in text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+        set.Add(line);
+    }
+}
+
+static string Tail(string text, int lines)
+{
+    var all = text.Split('\n');
+    return string.Join('\n', all.Skip(Math.Max(0, all.Length - lines)));
+}
+
+static string Git(string workingDirectory, params string[] arguments) => Run(workingDirectory, "git", arguments).Output;
+
+static (int ExitCode, string Output) Run(string workingDirectory, string fileName, params string[] arguments)
+{
+    using var process = Process.Start(new ProcessStartInfo(fileName, arguments)
+    {
+        WorkingDirectory = workingDirectory,
+        RedirectStandardOutput = true,
+        RedirectStandardError = true,
+    })!;
+    var stdout = process.StandardOutput.ReadToEndAsync();
+    var stderr = process.StandardError.ReadToEndAsync();
+    process.WaitForExit();
+    return (process.ExitCode, stdout.Result + stderr.Result);
+}

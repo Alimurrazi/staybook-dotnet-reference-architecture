@@ -5,30 +5,96 @@ An Airbnb-style vacation rental **backend** in ASP.NET Core 10, built step by st
 ## Source of truth
 
 - **`docs/planning/SERIES-PLAN.md`** holds every decision, its reason, the article-by-article plan and the open items. Read the relevant sections before working on any article.
+- `docs/adr/` records the decisions as they are made. An ADR never contradicts the plan; if it must, update the plan in the same change.
 - `docs/planning/reviews/` holds the external reviews that shaped the plan. They are history, not instructions.
 - When the plan and this file disagree, the plan wins. Update this file if that happens.
 
 ## Current status
 
-- Planning is complete (revised after three reviews).
-- **No code yet. Next: article 1, "Designing and setting up Staybook"** (plan section 9).
-- The article 1 checks in plan section 16 are done: `docs/planning/verification/article-01.md`.
-- Article 1 creates skeletons only for Listings, Pricing and Identity (plan decision 43).
-- Each article ships as article text plus repo code (plan decision 44).
-- Article 1 creates the full Claude Code harness (module `CLAUDE.md` files, hooks, skills, subagents) as part of the series. This file is only a bootstrap until then.
+- **Article 1, "Designing and setting up Staybook"**, in progress on branch `article-01`.
+- Modules that exist: **Listings, Pricing, Identity** (skeletons). Booking and Payments arrive in article 5, Availability in 6, Notifications in 7. Don't create them early.
+- Each article ships as article text (`docs/articles/`) plus code, and is tagged `article-NN`.
 
-## Rules for every session
+## Commands
+
+```bash
+dotnet build Staybook.slnx                 # build everything (warnings are errors)
+dotnet test --solution Staybook.slnx       # run every test (Microsoft Testing Platform)
+dotnet test --project tests/Staybook.ArchitectureTests
+dotnet format Staybook.slnx                # apply formatting and analyzer fixes
+dotnet run --project src/Staybook.AppHost  # start the API, PostgreSQL and the Aspire dashboard (needs Docker)
+```
+
+## Architecture
+
+Modular monolith (ADR 1). One project per module plus a `Contracts` project (ADR 2, option B). Layers are folders; architecture tests enforce them.
+
+```
+src/Staybook.AppHost/          Aspire orchestration
+src/Staybook.ServiceDefaults/  OpenTelemetry, health checks, resilience
+src/Staybook.Api/              Host and composition root: registers modules, nothing else
+src/Staybook.SharedKernel/     Money, DateRange, Result, base types. Keep it small
+src/Modules/<Module>/Staybook.<Module>/            Domain/ Application/ Infrastructure/ Endpoints/ <Module>Module.cs
+src/Modules/<Module>/Staybook.<Module>.Contracts/  The only part other modules may reference
+tests/                         ArchitectureTests, FullFlowTests, Modules/<Module>.Tests
+```
+
+**Dependency rule inside a module:** `Endpoints → Application → Domain`; `Infrastructure → Application, Domain`. `Domain` references only itself and `SharedKernel`: no Marten, Wolverine, ASP.NET Core or EF.
+
+**Between modules:** a module references other modules' `Contracts` projects only. Never another module's main project, never its database schema.
+
+Cross-module communication takes exactly one of three forms (plan section 7):
+
+| Form | Use for |
+|---|---|
+| Query through contracts (sync) | Reading another module's data |
+| Command through contracts (sync) | **Only** steps the user waits for. Always carries a stable operation ID |
+| Message (async, Wolverine) | Everything else |
+
+Each module owns one PostgreSQL schema named after the module (`listings`, `pricing`, `identity`).
+
+## Rules that must never break
 
 - **Backend only.** No frontend of any kind.
 - **Resist adding product features.** Every feature must teach something the plan lists.
-- **Follow the plan's article order.** Don't implement something from a later article early; the series depends on each article building on the previous one.
-- **One testing tool per purpose** (plan section 11). Don't add libraries the plan doesn't list without discussing it first.
+- **Follow the plan's article order.** Don't implement something from a later article early.
+- **No module reads another module's tables.**
+- **The server always calculates prices.** Clients send a `QuoteId`, never a price.
 - **Projections and views never decide availability or money.** Availability allocations are the source of truth for dates.
 - **A payment timeout is never a failure.** Its outcome is unknown until resolved.
-- **The server always calculates prices.** Clients send a `QuoteId`, never a price.
-- **No module reads another module's tables.** Cross-module communication follows the three forms in plan section 7.
-- Time-dependent code uses `TimeProvider`, never `DateTime.UtcNow` directly.
+- Time-dependent code takes a `TimeProvider`; never `DateTime.UtcNow` or `DateTimeOffset.Now` directly.
 - Name the product "Airbnb-style" or "inspired by Airbnb"; never use Airbnb's branding.
+
+## Conventions
+
+- Wolverine for handlers and messaging, not MediatR. No AutoMapper: map by hand (ADR 3).
+- Marten for documents and events on PostgreSQL (ADR 4).
+- Expected failures return a `Result`; exceptions are for bugs (ADR 7, article 2).
+- Money is minor units plus currency. Never `double`, never `decimal` without a currency.
+- Strongly typed IDs (`ListingId`, not `Guid`).
+- Package versions live only in `Directory.Packages.props`. Never put a `Version` on a `PackageReference`.
+- Don't add a library the plan doesn't list without asking first.
+
+## Testing
+
+- One tool per purpose (plan section 11): xUnit v3, Shouldly, FsCheck, Testcontainers, Alba, ArchUnitNET, Verify, WireMock.Net, k6, Stryker.NET.
+- Integration tests use real PostgreSQL (Testcontainers), never in-memory fakes.
+- Every bug fix starts with a failing test.
+- Architecture tests analyze **Debug** builds only. ArchUnitNET misses dependencies inside `async` methods in Release builds (issue #498); a guard test enforces this.
+
+## The Claude Code harness
+
+| Piece | Where | Purpose |
+|---|---|---|
+| This file and module `CLAUDE.md` files | Repo root, each module folder | Rules Claude reads; module files load when Claude works in that folder |
+| Permissions | `.claude/settings.json` | Allowed `dotnet`/`git`/`docker` commands; secrets are denied |
+| Hooks | `.claude/hooks/*.cs`, wired in `.claude/settings.json` | Block protected edits; build after edits; run affected tests before stopping |
+| Skills | `.claude/skills/` | `/new-value-object`, `/new-aggregate`, `/new-command`, `/new-endpoint` |
+| Subagents | `.claude/agents/` | `architecture-reviewer`, `test-writer` |
+
+Hooks are C# file-based apps run with `dotnet run`. The first run of each compiles it (about 30 to 40 seconds); later runs take under a second.
+
+**Working loop:** plan → write the failing test → implement → hooks and tests verify → `architecture-reviewer` → human review.
 
 ## Working with the author
 

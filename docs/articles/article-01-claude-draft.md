@@ -147,30 +147,6 @@ What each part is for:
 
 The tools are chosen for where the series goes: together, Marten and Wolverine give us documents, events, messaging and sagas on the same PostgreSQL database, so later articles never need a second one.
 
-The composition root shows how the folders become a running application. The host wires infrastructure and lists the modules; each module registers its own services:
-
-```csharp
-var builder = WebApplication.CreateBuilder(args);
-
-builder.AddServiceDefaults();
-builder.AddNpgsqlDataSource("staybook");
-
-// Registered only. Modules add their documents from article 3.
-builder.Services.AddMarten(_ => { }).UseNpgsqlDataSource();
-builder.Host.UseWolverine();
-
-builder.AddIdentityModule();
-builder.AddListingsModule();
-builder.AddPricingModule();
-
-var app = builder.Build();
-app.MapDefaultEndpoints();
-app.MapIdentityEndpoints();
-app.MapListingsEndpoints();
-app.MapPricingEndpoints();
-app.Run();
-```
-
 - **A strict build.** Warnings are errors (except NuGet vulnerability advisories, so a new advisory can't break an old tag), recommended analyzers are on, style rules run in the build, and package versions live in one file.
 - **One command to run it.** `dotnet run --project src/Staybook.AppHost` starts PostgreSQL and Keycloak in Docker, wires the connection string and opens a dashboard with logs, traces and metrics.
 - **Registered, not configured.** Marten and Wolverine are registered, but nothing uses them until article 3. Infrastructure arrives when it pays for itself.

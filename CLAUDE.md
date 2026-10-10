@@ -32,7 +32,7 @@ Modular monolith (ADR 1). One project per module plus a `Contracts` project (ADR
 
 ```
 src/Staybook.AppHost/          Aspire orchestration
-src/Staybook.ServiceDefaults/  OpenTelemetry, health checks, resilience
+src/Staybook.ServiceDefaults/  OpenTelemetry, health checks; HTTP resilience from article 9
 src/Staybook.Api/              Host and composition root: registers modules, nothing else
 src/Staybook.SharedKernel/     Money, DateRange, Result, base types. Keep it small
 src/Modules/<Module>/Staybook.<Module>/            Domain/ Application/ Infrastructure/ Endpoints/ <Module>Module.cs

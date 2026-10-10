@@ -131,6 +131,20 @@ src/
 tests/Staybook.ArchitectureTests/
 ```
 
+What each part is for:
+
+- **`Staybook.AppHost`**: the Aspire project you run locally. It starts PostgreSQL and Keycloak in Docker and then starts the API connected to them.
+- **`Staybook.ServiceDefaults`**: setup every service shares: OpenTelemetry, health checks and resilience for outgoing calls.
+- **`Staybook.Api`**: the application that actually runs. It only wires things together and registers the modules; it holds no business rules itself.
+- **`Staybook.SharedKernel`**: a few small types every module needs, such as `Money` and `DateRange` (from article 2). Kept small on purpose, because every module depends on it.
+- **`Modules/<Module>/Staybook.<Module>`**: one module's private code, in four folders:
+  - `Domain/`: the business rules, such as when a listing can be published or how a price is calculated;
+  - `Application/`: the use cases, such as "create a listing", which load data, call the domain and save the result;
+  - `Infrastructure/`: database and other technical details;
+  - `Endpoints/`: the HTTP API for this module.
+- **`Modules/<Module>/Staybook.<Module>.Contracts`**: the module's public part: the interfaces and data other modules may use.
+- **`tests/Staybook.ArchitectureTests`**: the tests that check the rules above. From article 2, each module also gets its own unit and integration tests in `tests/Modules/<Module>.Tests/`.
+
 The tools are chosen for where the series goes: together, Marten and Wolverine give us documents, events, messaging and sagas on the same PostgreSQL database, so later articles never need a second one.
 
 The composition root shows how the folders become a running application. The host wires infrastructure and lists the modules; each module registers its own services:

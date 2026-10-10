@@ -59,13 +59,13 @@ Only three modules exist today: Listings, Pricing and Identity. The other four a
 
 Modules communicate in exactly three ways:
 
-| Form | What it means | When | Example |
-|---|---|---|---|
-| **Query** | "Give me some data." The caller waits; nothing changes | Reading another module's data | Booking reads a quote from Pricing |
-| **Command** | "Do this now." The caller waits for the result | **Only** when a user is waiting for the answer | Only two in Staybook: Booking asks Availability to allocate nights, and Payments to authorize the card |
-| **Message** | "Do this when you can" or "this happened." The sender doesn't wait | Everything else | After the host accepts, Booking sends `CapturePayment`; when a booking is confirmed, Notifications sends the email |
+| Form              | What it means                                                      | When                                                 | Example                                                                                                             |
+| ----------------- | ------------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Query**   | "Give me some data." The caller waits; nothing changes             | Reading another module's data                        | Booking reads a quote from Pricing                                                                                  |
+| **Command** | "Do this now." The caller waits for the result                     | **Only** when a user is waiting for the answer | Only two in Staybook: Booking asks Availability to allocate nights, and Payments to authorize the card              |
+| **Message** | "Do this when you can" or "this happened." The sender doesn't wait | Everything else                                      | After the host accepts, Booking sends`CapturePayment`; when a booking is confirmed, Notifications sends the email |
 
-All three go through the other module's **Contracts** project, its small public part. Since every module runs in the same application, a query or command is a plain C# method call, not an HTTP request.
+All three go through the other module's **Contracts** project, its small public part. Since every module runs in the same application, a query or command is a plain C# method call.
 
 A command can succeed while its reply is lost, so it carries a unique **operation ID**. If the caller retries with the same ID, the other module recognizes it and doesn't do the work twice.
 
@@ -139,36 +139,14 @@ Running the app, not just building it, mattered: the API compiled fine but crash
 
 ## Tests that check themselves
 
-Article 1 has no business logic, but it has **37 architecture tests**: modules use each other only through contracts, the domain uses none of the listed infrastructure frameworks, layers point inward, and the shared kernel depends on no module and no infrastructure framework.
+Article 1 has no business logic, but it has **37 architecture tests**. They fail the test run when someone breaks one of these rules:
+
+- a module uses another module only through its **Contracts** project, never its private code;
+- the **domain** (the business rules) is plain C#, with no database, web or logging frameworks;
+- dependencies point **inward**: endpoints → application → domain, never the other way;
+- the **shared kernel**, the small project every module uses for types like `Money`, depends on no module and no framework.
 
 Several of those layer rules have no production types to inspect yet. They set the constraints for later articles, and they're written to pass on an empty layer rather than fail.
-
-The interesting part is a bug. ArchUnitNET 0.13.4, the version we pin, loses dependencies inside `async` methods in **Release** builds (issue [#498](https://github.com/TNG/ArchUnitNET/issues/498)). Our handlers will be async, so the boundary tests could pass while seeing nothing. So the tests check themselves. A **canary** hides a dependency inside an async method:
-
-```csharp
-public static class AsyncCanary
-{
-    public static async Task<int> UseForbiddenDependencyAsync()
-    {
-        await Task.Yield();
-        return ForbiddenDependency.Value;
-    }
-}
-```
-
-and a test asserts that the analyzer sees it:
-
-```csharp
-Types().That().Are(typeof(AsyncCanary))
-    .Should().DependOnAny(Types().That().Are(typeof(ForbiddenDependency)))
-    .Check(architecture);
-```
-
-The rule is **positive** on purpose. Asserting that a "must not depend" rule fails would also succeed if the canary type stopped matching at all. This rule passes only if the canary is found *and* its dependency is seen. A second guard fails if the tests run against an optimized build.
-
-In Debug, all 37 pass. In Release, the guard and the canary fail, exactly as they should. The canary proves the analyzer can see the kind of dependency in our example; it doesn't prove every rule is right, which is what the rules' own tests are for.
-
-A second surprise came from review. Reading a `const` from another module leaves no trace in the compiled code, because the compiler copies the value. The type rules can't see that, so one more test reads the project files and rejects forbidden references directly. The type rules catch what the code *uses*; that test catches what the project *may* use.
 
 ## Built with Claude Code
 

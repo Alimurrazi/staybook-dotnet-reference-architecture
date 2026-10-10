@@ -1,22 +1,19 @@
-# Designing and setting up Staybook
+# Learning .NET Architecture — Part 1: Design and Setup
 
-*Staybook, part 1 of 14 · Code: tag [`article-01`](https://github.com/Alimurrazi/staybook-dotnet-reference-architecture/tree/article-01) · Full details: [article 1 report](https://github.com/Alimurrazi/staybook-dotnet-reference-architecture/blob/article-01/docs/reports/article-01-designing-and-setting-up-staybook.md)*
+In this series, we build **Staybook**, a simplified vacation rental backend inspired by Airbnb, using ASP.NET Core 10. Guests find places to stay, get a price, book nights and pay. Hosts publish listings and accept booking requests.
 
-In this series we build **Staybook**, a simplified vacation rental backend inspired by Airbnb, in ASP.NET Core 10. Guests find listings, get a price, book nights and pay; hosts publish listings and accept requests. That one familiar domain is the thread through the whole journey: along the way we learn and use the tools and architecture patterns a real system like this needs, from Clean Architecture and CQRS to event sourcing, reliable messaging, sagas, payments and security.
-
-This first article designs Staybook and sets up a solution you can clone, run and test, with its boundaries enforced from the first commit.
+We use this familiar booking flow to explore Clean Architecture, CQRS, event sourcing, reliable messaging, sagas, payments and security—introducing each tool or pattern when we need it.
 
 ## The tools
 
-These are the main tools in this article. Each line says what the tool is and what Staybook uses it for; the links go to the official sites if you want to learn more.
+These are the main tools in this article.
 
-- **[ASP.NET Core 10](https://dotnet.microsoft.com/apps/aspnet)**: Microsoft's framework for building web APIs in C#. Staybook's whole backend is one ASP.NET Core application.
 - **[PostgreSQL](https://www.postgresql.org/)**: an open-source relational database. Staybook keeps all its data in one PostgreSQL database, with a separate schema for each module.
 - **[Marten](https://martendb.io/)**: a .NET library that turns PostgreSQL into a document database and an event store. Staybook uses it to store documents such as listings and quotes, and later the events of each booking.
 - **[Wolverine](https://wolverinefx.net/)**: a .NET library for handling commands and messages. Staybook uses it for its handlers, and later for reliable messaging, the outbox and sagas.
-- **[Aspire](https://aspire.dev/)**: a tool for running an application with everything it depends on. One command starts PostgreSQL and Keycloak in Docker, connects the API to them and opens a dashboard.
+- **[Aspire](https://aspire.dev/)**: a tool for running an application with everything it depends on. One command starts PostgreSQL and Keycloak in Docker, connects the API to PostgreSQL, and provides a dashboard. Keycloak remains unused until article 5.
 - **[OpenTelemetry](https://opentelemetry.io/)**: an open standard for logs, traces and metrics. Staybook sends them to the Aspire dashboard, so you can see what each request did.
-- **[Keycloak](https://www.keycloak.org/)**: an open-source login and identity server. It's started now but used only from article 4, for authentication.
+- **[Keycloak](https://www.keycloak.org/)**: an open-source login and identity server. It's started now but used only from article 5, for authentication.
 - **[ArchUnitNET](https://github.com/TNG/ArchUnitNET)**: a library for writing tests about the code's structure. Staybook's architecture tests use it to check the module and layer rules.
 
 ## What this article builds, and what comes later
@@ -24,36 +21,29 @@ These are the main tools in this article. Each line says what the tool is and wh
 **What exists after this article:**
 
 - three module skeletons: Listings, Pricing and Identity;
-- Marten, Wolverine and PostgreSQL, registered but not used yet;
-- OpenTelemetry, with logs and traces in the Aspire dashboard;
+- PostgreSQL running locally, with Marten and Wolverine registered for later features;
+- OpenTelemetry, with logs, traces and metrics in the Aspire dashboard;
 - health endpoints;
 - 37 architecture tests.
 
 **What comes later:**
 
-- article 3: the first business endpoints;
-- article 4: authentication with Keycloak;
-- article 5: event-sourced bookings;
-- article 6: allocations that make double booking impossible;
-- article 7: the outbox;
-- article 8: sagas.
+- article 2: building with Claude Code;
+- article 3: domain modeling;
+- article 4: the first business endpoints;
+- article 5: authentication with Keycloak;
+- article 6: event-sourced bookings;
+- article 7: allocations that make double booking impossible;
+- article 8: the outbox;
+- article 9: sagas.
 
 So after the setup commands you get a running, observable, well-guarded skeleton, not a booking API. That comes over the next few articles.
 
 > **A note on the plan.** The article order, the module boundaries and the architecture in this article are my initial plan. Some of it will probably change as development goes on and the code teaches me something the plan didn't foresee. When that happens, the article that makes the change will say what changed and why, and the decision records in `docs/adr/` will be updated with it.
 
-## Why a rental platform
+We keep the scope small: no photos, chat, wishlists or frontend. Each feature helps explain a specific problem or design choice.
 
-The rental flow is familiar, but Staybook makes its rules explicit: a booking is either instant or needs the host's approval, a pending request holds the nights for up to 24 hours, and every booking uses a quote the server stored. Those rules lead straight to the hard parts:
-
-- **Availability:** two guests book the same nights at the same moment. Exactly one must win.
-- **Money:** every cent must add up, and a price a guest was quoted must never change.
-- **Time:** a booking request waits up to 24 hours while the nights are on hold and the card is authorized.
-- **Failure:** the payment provider times out. Did the charge happen? A timeout doesn't prove a failure; the outcome is *unknown*.
-
-Everything else is deliberately small. No photos, no chat, no wishlists, no frontend. Every feature has to teach something.
-
-Staybook is a **production-oriented reference architecture**, not a platform you could run a business on. No real money moves, there are no backups, and nothing has had a legal or security audit. Saying so up front keeps the rest honest.
+Staybook is a **reference architecture built around real-world problems**. It is a learning project, not a finished platform for running a business. It does not handle real payments or include backups, and it has not been reviewed for legal compliance or audited for security.
 
 ## Finding the boundaries
 
@@ -64,10 +54,10 @@ Instead of drawing boxes, walk through one scenario: *a guest requests a stay, t
 Watch where the vocabulary changes:
 
 1. The guest finds a **listing**: a property a host offers, with a title, a city, a capacity and house rules. A new listing has the status **Draft**; guests can book it only after the host publishes it. That's **listings**.
-2. The guest asks for a price for their dates and number of guests. The server calculates it from the host's **pricing plan** (rates, fees and discounts), rounds every line to whole cents, and saves the result as a **quote**. If the host changes the plan later, the quote keeps its price; only new quotes use the new prices. That's **pricing**.
+2. The guest asks for a price for their dates and number of guests. The server calculates it from the host's **pricing plan** (rates, fees and discounts), rounds every line to whole cents, and saves the result as a **quote**. If the host changes the plan later, an existing quote keeps its price until it expires. Only new quotes use the new prices. That's **pricing**.
 3. The guest requests to book with the quote's ID (never a price). The nights go on **hold** (**availability**), the card is **authorized** (**payments**), and the request is recorded (**booking**).
 4. The host accepts: the hold becomes a confirmed allocation, then the money is captured.
-5. Both get an email (**notifications**), and someone is always a guest or a host (**identity**).
+5. Both get an email (**notifications**). **Identity** tells us who is making the request and which roles they have.
 
 Each place where the words, the rules or the owner change is a likely boundary between two modules. That gives seven modules. They are my starting design: if building a workflow shows that a boundary is wrong, it will change.
 
@@ -83,18 +73,18 @@ Only three modules exist today: Listings, Pricing and Identity. The other four a
 
 When one module needs something from another, it uses one of three forms. If you know HTTP, you can think of them like this:
 
-| Form | Think of it as | Example |
-|---|---|---|
-| **Query** | A `GET`: "give me some data." Nothing changes | Booking reads the guest's quote from Pricing |
-| **Command** | A `POST`: "do this now," and wait for the answer | Booking asks Availability to hold the nights while the guest waits |
-| **Message** | An event: "this happened." Nobody waits | Booking announces `BookingConfirmed`, and Notifications sends the email |
+| Form              | Think of it as                                                                       | Example                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| **Query**   | A`GET`: "give me some data." Nothing changes                                       | Booking reads the guest's quote from Pricing                             |
+| **Command** | A`POST`: "do this now," and wait for the answer                                    | Booking asks Availability to hold the nights while the guest waits       |
+| **Message** | A request or event processed asynchronously; the caller does not wait for completion | Booking announces`BookingConfirmed`, and Notifications sends the email |
 
 Since everything runs in one application, these aren't real HTTP calls. A query or command is a plain C# method call through the other module's **Contracts** project, its small public part, and a message goes through Wolverine.
 
 Two rules keep this simple:
 
-- Use a command only when a user is waiting for the answer. Everything else is a message.
-- Every command carries an **operation ID**. If the reply gets lost and the caller retries, the other module sees the same ID and doesn't do the work twice.
+- Use a synchronous cross-module command only when a user is waiting for the answer. Other cross-module actions use messages.
+- Every synchronous cross-module command carries a stable **operation ID**. The receiving module stores the operation and its outcome, so a retry reuses the existing operation rather than repeating the work. An outcome may still be pending or unknown.
 
 ## A modular monolith
 
@@ -110,7 +100,7 @@ Here's what actually runs after article 1:
 
 *What runs after article 1.*
 
-Microservices would turn every boundary into a network call and a deployment before we know the boundaries are right. When there's a real reason to split, in article 11, the boundaries will already be there.
+Microservices would turn every boundary into a network call and a deployment before we know the boundaries are right. When there's a real reason to split, in article 12, the boundaries will already be there.
 
 Each decision has a one-page record in `docs/adr/`: the modular monolith, the project structure, Wolverine instead of MediatR, Marten on PostgreSQL, and logging through `ILogger` with OpenTelemetry.
 
@@ -120,7 +110,7 @@ The tools are chosen for where the series goes: together, Marten and Wolverine g
 
 - **A strict build.** Warnings are errors (except NuGet vulnerability advisories, so a new advisory can't break an old tag), recommended analyzers are on, style rules run in the build, and package versions live in one file.
 - **One command to run it.** `dotnet run --project src/Staybook.AppHost` starts PostgreSQL and Keycloak in Docker, wires the connection string and opens a dashboard with logs, traces and metrics.
-- **Registered, not configured.** Marten and Wolverine are registered, but nothing uses them until article 3. Infrastructure arrives when it pays for itself.
+- **Registered, not configured.** Marten and Wolverine are registered, but nothing uses them until article 4. Infrastructure arrives when it pays for itself.
 
 Running the app, not just building it, mattered: the API compiled fine but crashed at startup. In Wolverine 6's default dynamic code-generation mode, the API needs the separate `WolverineFx.RuntimeCompilation` package to start. A passing build proves the code compiles, not that the application starts.
 
@@ -140,17 +130,17 @@ tests/Staybook.ArchitectureTests/
 
 What each part is for:
 
-- **`Staybook.AppHost`**: the Aspire project you run locally. It starts PostgreSQL and Keycloak in Docker and then starts the API connected to them.
+- **`Staybook.AppHost`**: the Aspire project you run locally. It starts PostgreSQL and Keycloak in Docker, then starts the API connected to PostgreSQL. Keycloak remains unused until article 5.
 - **`Staybook.ServiceDefaults`**: setup every service shares: OpenTelemetry and health checks.
 - **`Staybook.Api`**: the application that actually runs. It only wires things together and registers the modules; it holds no business rules itself.
-- **`Staybook.SharedKernel`**: a few small types every module needs, such as `Money` and `DateRange` (from article 2). Kept small on purpose, because every module depends on it.
+- **`Staybook.SharedKernel`**: a few small types every module needs, such as `Money` and `DateRange` (from article 3). Kept small on purpose, because every module depends on it.
 - **`Modules/<Module>/Staybook.<Module>`**: one module's private code, in four folders:
   - `Domain/`: the business rules, such as when a listing can be published or how a price is calculated;
   - `Application/`: the use cases, such as "create a listing", which load data, call the domain and save the result;
   - `Infrastructure/`: database and other technical details;
   - `Endpoints/`: the HTTP API for this module.
 - **`Modules/<Module>/Staybook.<Module>.Contracts`**: the module's public part: the interfaces and data other modules may use.
-- **`tests/Staybook.ArchitectureTests`**: the tests that check the structure rules described in the next section. From article 2, each module also gets its own unit and integration tests in `tests/Modules/<Module>.Tests/`.
+- **`tests/Staybook.ArchitectureTests`**: the tests that check the structure rules described in the next section. Domain unit tests arrive in article 3, followed by database and HTTP integration tests in article 4. Module-specific tests live in `tests/Modules/<Module>.Tests/`.
 
 ## Tests that check themselves
 
@@ -159,26 +149,34 @@ Article 1 has no business logic, but it has **37 architecture tests**. They fail
 - modules use each other only through their **Contracts** projects;
 - the **domain** uses no database, web or logging frameworks;
 - dependencies point **inward**: endpoints → application → domain, never the other way;
-- the **shared kernel** depends on no module and no framework.
-
-Several of those layer rules have no production types to inspect yet. They set the constraints for later articles, and they're written to pass on an empty layer rather than fail.
-
-## Built with Claude Code
-
-Staybook is built with Claude Code, and the harness that keeps it on track (`CLAUDE.md` files, permissions, hooks, skills and subagents) is part of the repo. It gets its own article: [Building Staybook with Claude Code](https://github.com/Alimurrazi/staybook-dotnet-reference-architecture/blob/article-01/docs/articles/article-01b-claude-draft.md).
+- the **shared kernel** does not depend on module implementations or the infrastructure frameworks checked by the suite.
 
 ## Try it
 
-You need the .NET 10 SDK (10.0.100 or later) and Docker, running.
+You need the .NET 10 SDK (10.0.100 or later) and Docker running.
 
 ```bash
 git clone https://github.com/Alimurrazi/staybook-dotnet-reference-architecture.git
 cd staybook-dotnet-reference-architecture
 git checkout article-01
-dotnet test --solution Staybook.slnx    # Debug, the default; the architecture tests need it
+dotnet test --solution Staybook.slnx    # Runs in Debug, which the architecture tests require
 dotnet run --project src/Staybook.AppHost
 ```
 
-37 tests pass, and `http://localhost:5174/health` answers `Healthy`. That endpoint includes the PostgreSQL check and is mapped only in Development. Then break something: reference `Staybook.Pricing` from Listings, use one of its types, and watch the tests name the violation.
+You should see 37 passing tests. Once the application starts, visit `http://localhost:5174/health`. It should return `Healthy`, confirming that the API can connect to PostgreSQL. This endpoint is available only in Development.
 
-**Next:** article 2 models the domain: money that never loses a cent, a listing with a real lifecycle, and quotes that never change. Pure C#, no database, every rule a test.
+The terminal also prints an Aspire dashboard login URL:
+
+```text
+Login URL: http://localhost:15174/login?t=<your-login-token>
+```
+
+Open the URL printed in your terminal to view the Aspire dashboard. It displays the local resources, their status, logs, traces and metrics.
+
+<!-- Insert the uploaded Aspire dashboard screenshot here before publishing on dev.to. -->
+
+*Suggested screenshot caption: Aspire dashboard after starting Staybook. Keycloak is provisioned but remains unused until article 5.*
+
+## Next: Building Staybook with Claude Code
+
+Staybook is built with Claude Code. The repository includes the setup that guides its work: `CLAUDE.md` files, permissions, hooks, skills and subagents. We’ll explore how this setup works in the next article.

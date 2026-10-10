@@ -4,17 +4,15 @@
 
 In this series we build **Staybook**, a simplified vacation rental backend inspired by Airbnb, in ASP.NET Core 10. Guests find listings, get a price, book nights and pay; hosts publish listings and accept requests. That one familiar domain is the thread through the whole journey: along the way we learn and use the tools and architecture patterns a real system like this needs, from Clean Architecture and CQRS to event sourcing, reliable messaging, sagas, payments and security.
 
-Each tool or pattern arrives only when the domain asks for it, not because it's on a checklist. Event sourcing comes when we need to rebuild a booking's lifecycle from its events, an outbox when a crash can separate a database commit from the message that should follow it, and sagas when a booking waits for the host to approve it.
-
 This first article designs Staybook and sets up a solution you can clone, run and test, with its boundaries enforced from the first commit.
 
-| Today (article 1) | Later |
-|---|---|
-| Three module skeletons: Listings, Pricing, Identity | Business endpoints (article 3) |
-| Marten, Wolverine and PostgreSQL registered | Authentication with Keycloak (article 4) |
-| OpenTelemetry, logs and traces in the Aspire dashboard | Event-sourced bookings (article 5) |
-| Health endpoints | Allocations and the exclusion constraint (article 6) |
-| 37 architecture tests | Outbox (article 7), sagas (article 8) |
+| Today (article 1)                                      | Later                                                |
+| ------------------------------------------------------ | ---------------------------------------------------- |
+| Three module skeletons: Listings, Pricing, Identity    | Business endpoints (article 3)                       |
+| Marten, Wolverine and PostgreSQL registered            | Authentication with Keycloak (article 4)             |
+| OpenTelemetry, logs and traces in the Aspire dashboard | Event-sourced bookings (article 5)                   |
+| Health endpoints                                       | Allocations and the exclusion constraint (article 6) |
+| 37 architecture tests                                  | Outbox (article 7), sagas (article 8)                |
 
 So after the setup commands you get a running, observable, well-guarded skeleton, not a booking API. That comes over the next few articles.
 
@@ -105,11 +103,11 @@ flowchart LR
 
 Modules communicate in exactly three ways:
 
-| Form | When | Example |
-|---|---|---|
-| **Query** through the other module's contracts | Reading its data | Booking reads a quote from Pricing |
-| **Command** through its contracts | **Only** for steps a user is waiting for, always with an operation ID | Booking asks Availability to allocate nights |
-| **Message** | Everything else | Booking requests the payment capture after the host accepts |
+| Form                                                 | When                                                                        | Example                                                     |
+| ---------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| **Query** through the other module's contracts | Reading its data                                                            | Booking reads a quote from Pricing                          |
+| **Command** through its contracts              | **Only** for steps a user is waiting for, always with an operation ID | Booking asks Availability to allocate nights                |
+| **Message**                                    | Everything else                                                             | Booking requests the payment capture after the host accepts |
 
 In a modular monolith these synchronous calls are in-process method calls through a contracts interface, not HTTP requests.
 

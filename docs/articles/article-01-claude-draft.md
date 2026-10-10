@@ -35,7 +35,7 @@ Staybook is a **production-oriented reference architecture**, not a platform you
 
 Instead of drawing boxes, walk through one scenario: *a guest requests a stay, the host accepts, the payment is captured.*
 
-[![A guest requests a stay, the host accepts, the payment is captured](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/booking-flow.png)](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/booking-flow.png)
+[![A guest requests a stay, the host accepts, the payment is captured](images/article-01/booking-flow.png)](images/article-01/booking-flow.png)
 
 Watch where the vocabulary changes:
 
@@ -49,7 +49,7 @@ Each change in vocabulary, rules and ownership suggests a boundary. That gives s
 
 Only three modules exist today (Listings, Pricing and Identity), because the others arrive in the articles that need them:
 
-[![Staybook modules and how they talk](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/context-map.png)](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/context-map.png)
+[![Staybook modules and how they talk](images/article-01/context-map.png)](images/article-01/context-map.png)
 
 *Target architecture across the series. Green modules exist after article 1; dashed ones arrive later. Solid arrows are queries, thick arrows synchronous commands, dotted arrows messages.*
 
@@ -85,7 +85,7 @@ Seven modules sound like seven microservices. They aren't, yet. Staybook is one 
 
 Here's what actually runs after article 1:
 
-[![What runs after article 1](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/runtime.png)](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/runtime.png)
+[![What runs after article 1](images/article-01/runtime.png)](images/article-01/runtime.png)
 
 *What runs after article 1.*
 

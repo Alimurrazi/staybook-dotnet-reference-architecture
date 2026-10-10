@@ -39,7 +39,7 @@ Instead of drawing boxes, walk through one scenario: *a guest requests a stay, t
 
 Watch where the vocabulary changes:
 
-1. The guest finds a **listing**: details, a lifecycle, draft or published.
+1. The guest finds a **listing**: a property a host offers, with a title, a city, a capacity and house rules. A new listing has the status **Draft**; guests can book it only after the host publishes it. That's **listings**.
 2. They ask for a price. Rates, fees, discounts, rounding and a stored, immutable **quote** are a different language that changes for different reasons. That's **pricing**.
 3. They request to book with the quote's ID (never a price). The nights go on **hold** (**availability**), the card is **authorized** (**payments**), and the request is recorded (**booking**).
 4. The host accepts: the hold becomes a confirmed allocation, then the money is captured.

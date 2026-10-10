@@ -131,7 +131,7 @@ src/
 tests/Staybook.ArchitectureTests/
 ```
 
-The stack is chosen for where the series goes, not just for today. **Marten** stores documents now and event streams from article 5. **Wolverine** runs handlers from article 3 and durable messaging, the outbox and sagas later, all on the same PostgreSQL. **Aspire** makes the local dependencies reproducible with one command.
+The tools are chosen for where the series goes: together, Marten and Wolverine give us documents, events, messaging and sagas on the same PostgreSQL database, so later articles never need a second one.
 
 The composition root shows how the folders become a running application. The host wires infrastructure and lists the modules; each module registers its own services:
 

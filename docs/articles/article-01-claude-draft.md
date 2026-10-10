@@ -6,13 +6,22 @@ In this series we build **Staybook**, a simplified vacation rental backend inspi
 
 This first article designs Staybook and sets up a solution you can clone, run and test, with its boundaries enforced from the first commit.
 
-| Today (article 1)                                      | Later                                                |
-| ------------------------------------------------------ | ---------------------------------------------------- |
-| Three module skeletons: Listings, Pricing, Identity    | Business endpoints (article 3)                       |
-| Marten, Wolverine and PostgreSQL registered            | Authentication with Keycloak (article 4)             |
-| OpenTelemetry, logs and traces in the Aspire dashboard | Event-sourced bookings (article 5)                   |
-| Health endpoints                                       | Allocations and the exclusion constraint (article 6) |
-| 37 architecture tests                                  | Outbox (article 7), sagas (article 8)                |
+**What exists after this article:**
+
+- three module skeletons: Listings, Pricing and Identity;
+- Marten, Wolverine and PostgreSQL, registered but not used yet;
+- OpenTelemetry, with logs and traces in the Aspire dashboard;
+- health endpoints;
+- 37 architecture tests.
+
+**What comes later:**
+
+- article 3: the first business endpoints;
+- article 4: authentication with Keycloak;
+- article 5: event-sourced bookings;
+- article 6: allocations that make double booking impossible;
+- article 7: the outbox;
+- article 8: sagas.
 
 So after the setup commands you get a running, observable, well-guarded skeleton, not a booking API. That comes over the next few articles.
 

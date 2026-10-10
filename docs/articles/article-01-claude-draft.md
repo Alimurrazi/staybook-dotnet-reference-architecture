@@ -147,7 +147,7 @@ What each part is for:
   - `Infrastructure/`: database and other technical details;
   - `Endpoints/`: the HTTP API for this module.
 - **`Modules/<Module>/Staybook.<Module>.Contracts`**: the module's public part: the interfaces and data other modules may use.
-- **`tests/Staybook.ArchitectureTests`**: the tests that check the structure rules described in "Tests that check themselves" below. From article 2, each module also gets its own unit and integration tests in `tests/Modules/<Module>.Tests/`.
+- **`tests/Staybook.ArchitectureTests`**: the tests that check the structure rules described in the next section. From article 2, each module also gets its own unit and integration tests in `tests/Modules/<Module>.Tests/`.
 
 ## Tests that check themselves
 

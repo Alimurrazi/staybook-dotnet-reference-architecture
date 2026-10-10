@@ -101,7 +101,9 @@ src/
   Staybook.ServiceDefaults/  OpenTelemetry and health checks
   Staybook.Api/              Composition root, no business logic
   Staybook.SharedKernel/     Shared types, kept small
-  Modules/<Module>/          Staybook.<Module> + Staybook.<Module>.Contracts
+  Modules/<Module>/
+    Staybook.<Module>/            Domain/ Application/ Infrastructure/ Endpoints/
+    Staybook.<Module>.Contracts/  The only part other modules may use
 tests/Staybook.ArchitectureTests/
 ```
 

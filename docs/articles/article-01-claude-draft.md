@@ -2,7 +2,9 @@
 
 *Staybook, part 1 of 14 · Code: tag [`article-01`](https://github.com/Alimurrazi/staybook-dotnet-reference-architecture/tree/article-01) · Full details: [article 1 report](https://github.com/Alimurrazi/staybook-dotnet-reference-architecture/blob/article-01/docs/reports/article-01-designing-and-setting-up-staybook.md)*
 
-Most architecture tutorials pick their patterns first and find a domain later. This series does the opposite. We build **Staybook**, an Airbnb-style vacation rental backend in ASP.NET Core 10, and add each pattern only when the domain demands it: event sourcing when we need to rebuild a booking's lifecycle from its events, an outbox when a crash can separate a database commit from the message that should follow it, and sagas when a booking waits for the host to approve it.
+In this series we build **Staybook**, a simplified vacation rental backend inspired by Airbnb, in ASP.NET Core 10. Guests find listings, get a price, book nights and pay; hosts publish listings and accept requests. That one familiar domain is the thread through the whole journey: along the way we learn and use the tools and architecture patterns a real system like this needs, from Clean Architecture and CQRS to event sourcing, reliable messaging, sagas, payments and security.
+
+Each tool or pattern arrives only when the domain asks for it, not because it's on a checklist. Event sourcing comes when we need to rebuild a booking's lifecycle from its events, an outbox when a crash can separate a database commit from the message that should follow it, and sagas when a booking waits for the host to approve it.
 
 This first article designs Staybook and sets up a solution you can clone, run and test, with its boundaries enforced from the first commit.
 

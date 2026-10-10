@@ -181,10 +181,10 @@ Running the app, not just building it, mattered: the API compiled fine but crash
 
 Article 1 has no business logic, but it has **37 architecture tests**. They fail the test run when someone breaks one of these rules:
 
-- a module uses another module only through its **Contracts** project, never its private code;
-- the **domain** (the business rules) is plain C#, with no database, web or logging frameworks;
+- modules use each other only through their **Contracts** projects;
+- the **domain** uses no database, web or logging frameworks;
 - dependencies point **inward**: endpoints → application → domain, never the other way;
-- the **shared kernel**, the small project every module uses for types like `Money`, depends on no module and no framework.
+- the **shared kernel** depends on no module and no framework.
 
 Several of those layer rules have no production types to inspect yet. They set the constraints for later articles, and they're written to pass on an empty layer rather than fail.
 

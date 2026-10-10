@@ -93,12 +93,6 @@ All three go through the other module's **Contracts** project, its small public 
 
 A command can succeed while its reply is lost, so it carries a unique **operation ID**. If the caller retries with the same ID, the other module recognizes it and doesn't do the work twice.
 
-## Not everything has to be right immediately
-
-Availability must reject overlapping active allocations for the same listing; article 6 enforces that with a PostgreSQL exclusion constraint. Search results and emails can tolerate delayed updates. And money can never be atomic with an external provider, so the design records the intent first and resolves the outcome after.
-
-Two rules come out of that, and they hold for the whole series: **a view never decides availability or money**, and **a provider timeout is never treated as a failure**: its outcome is unknown until resolved.
-
 ## A modular monolith
 
 Seven modules sound like seven microservices. They aren't, yet. Staybook is one application with one PostgreSQL database and hard boundaries inside it:

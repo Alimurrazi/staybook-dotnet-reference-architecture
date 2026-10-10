@@ -40,8 +40,8 @@ Instead of drawing boxes, walk through one scenario: *a guest requests a stay, t
 Watch where the vocabulary changes:
 
 1. The guest finds a **listing**: a property a host offers, with a title, a city, a capacity and house rules. A new listing has the status **Draft**; guests can book it only after the host publishes it. That's **listings**.
-2. They ask for a price. Rates, fees, discounts, rounding and a stored, immutable **quote** are a different language that changes for different reasons. That's **pricing**.
-3. They request to book with the quote's ID (never a price). The nights go on **hold** (**availability**), the card is **authorized** (**payments**), and the request is recorded (**booking**).
+2. The guest asks for a price for their dates and number of guests. The server calculates it from the host's **pricing plan** (rates, fees and discounts), rounds every line to whole cents, and saves the result as a **quote**. If the host changes the plan later, the quote keeps its price; only new quotes use the new prices. That's **pricing**.
+3. The guest requests to book with the quote's ID (never a price). The nights go on **hold** (**availability**), the card is **authorized** (**payments**), and the request is recorded (**booking**).
 4. The host accepts: the hold becomes a confirmed allocation, then the money is captured.
 5. Both get an email (**notifications**), and someone is always a guest or a host (**identity**).
 

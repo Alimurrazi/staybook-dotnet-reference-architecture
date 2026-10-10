@@ -81,17 +81,20 @@ Only three modules exist today: Listings, Pricing and Identity. The other four a
 
 ## Three ways to talk
 
-Modules communicate in exactly three ways:
+When one module needs something from another, it uses one of three forms. If you know HTTP, you can think of them like this:
 
-| Form              | What it means                                                      | When                                                 | Example                                                                                                             |
-| ----------------- | ------------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| **Query**   | "Give me some data." The caller waits; nothing changes             | Reading another module's data                        | Booking reads a quote from Pricing                                                                                  |
-| **Command** | "Do this now." The caller waits for the result                     | **Only** when a user is waiting for the answer | Only two in Staybook: Booking asks Availability to allocate nights, and Payments to authorize the card              |
-| **Message** | "Do this when you can" or "this happened." The sender doesn't wait | Everything else                                      | After the host accepts, Booking sends`CapturePayment`; when a booking is confirmed, Notifications sends the email |
+| Form | Think of it as | Example |
+|---|---|---|
+| **Query** | A `GET`: "give me some data." Nothing changes | Booking reads the guest's quote from Pricing |
+| **Command** | A `POST`: "do this now," and wait for the answer | Booking asks Availability to hold the nights while the guest waits |
+| **Message** | An event: "this happened." Nobody waits | Booking announces `BookingConfirmed`, and Notifications sends the email |
 
-All three go through the other module's **Contracts** project, its small public part. Since every module runs in the same application, a query or command is a plain C# method call.
+Since everything runs in one application, these aren't real HTTP calls. A query or command is a plain C# method call through the other module's **Contracts** project, its small public part, and a message goes through Wolverine.
 
-A command can succeed while its reply is lost, so it carries a unique **operation ID**. If the caller retries with the same ID, the other module recognizes it and doesn't do the work twice.
+Two rules keep this simple:
+
+- Use a command only when a user is waiting for the answer. Everything else is a message.
+- Every command carries an **operation ID**. If the reply gets lost and the caller retries, the other module sees the same ID and doesn't do the work twice.
 
 ## A modular monolith
 

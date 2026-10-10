@@ -16,6 +16,8 @@ This first article designs Staybook and sets up a solution you can clone, run an
 
 So after the setup commands you get a running, observable, well-guarded skeleton, not a booking API. That comes over the next few articles.
 
+> **A note on the plan.** The article order, the module boundaries and the architecture in this article are my initial plan. Some of it will probably change as development goes on and the code teaches me something the plan didn't foresee. When that happens, the article that makes the change will say what changed and why, and the decision records in `docs/adr/` will be updated with it.
+
 ## Why a rental platform
 
 The rental flow is familiar, but Staybook makes its rules explicit: a booking is either instant or needs the host's approval, a pending request holds the nights for up to 24 hours, and every booking uses a quote the server stored. Those rules lead straight to the hard parts:

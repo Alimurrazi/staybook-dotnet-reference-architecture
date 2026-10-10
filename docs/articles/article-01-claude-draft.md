@@ -59,17 +59,15 @@ Only three modules exist today: Listings, Pricing and Identity. The other four a
 
 Modules communicate in exactly three ways:
 
-| Form                                                 | When                                                                        | Example                                                     |
-| ---------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| **Query** through the other module's contracts | Reading its data                                                            | Booking reads a quote from Pricing                          |
-| **Command** through its contracts              | **Only** for steps a user is waiting for, always with an operation ID | Booking asks Availability to allocate nights                |
-| **Message**                                    | Everything else                                                             | Booking requests the payment capture after the host accepts |
+| Form | What it means | When | Example |
+|---|---|---|---|
+| **Query** | "Give me some data." The caller waits; nothing changes | Reading another module's data | Booking reads a quote from Pricing |
+| **Command** | "Do this now." The caller waits for the result | **Only** when a user is waiting for the answer | Only two in Staybook: Booking asks Availability to allocate nights, and Payments to authorize the card |
+| **Message** | "Do this when you can" or "this happened." The sender doesn't wait | Everything else | After the host accepts, Booking sends `CapturePayment`; when a booking is confirmed, Notifications sends the email |
 
-In a modular monolith these synchronous calls are in-process method calls through a contracts interface, not HTTP requests.
+All three go through the other module's **Contracts** project, its small public part. Since every module runs in the same application, a query or command is a plain C# method call, not an HTTP request.
 
-The middle row is the one that spreads if you let it. Staybook allows synchronous commands in only two relationships: Booking calling Availability to allocate nights, and Booking calling Payments to authorize (and, for instant book, capture) a payment while the guest waits. Everything else is a message.
-
-Because a call can succeed while its response is lost, each operation has a stable ID, and the receiving module records the operation and its outcome. A retry then finds the existing operation instead of repeating the side effect. For an allocation, that means getting the existing allocation back. For a payment, the recorded outcome may still be pending or unknown, and the design has to handle that honestly.
+A command can succeed while its reply is lost, so it carries a unique **operation ID**. If the caller retries with the same ID, the other module recognizes it and doesn't do the work twice.
 
 ## Not everything has to be right immediately
 

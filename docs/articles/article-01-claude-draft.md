@@ -45,9 +45,11 @@ Watch where the vocabulary changes:
 4. The host accepts: the hold becomes a confirmed allocation, then the money is captured.
 5. Both get an email (**notifications**), and someone is always a guest or a host (**identity**).
 
-Each change in vocabulary, rules and ownership suggests a boundary. That gives seven candidate modules, and the series tests them as the workflows take shape. The split that surprises people is Booking and Availability: **Booking owns the reservation lifecycle; Availability owns the exclusive allocation of nights.** A booking can be pending, accepted, cancelled or expired; Availability only cares that no two active allocations overlap.
+Each place where the words, the rules or the owner change is a likely boundary between two modules. That gives seven modules. They are my starting design: if building a workflow shows that a boundary is wrong, it will change.
 
-Only three modules exist today (Listings, Pricing and Identity), because the others arrive in the articles that need them:
+Booking and Availability can look like one module, but they do different jobs. **Booking** follows a reservation from the request to the end: waiting for the host, confirmed, cancelled or expired. **Availability** only decides which nights are taken, and makes sure two guests can never get the same night.
+
+Only three modules exist today: Listings, Pricing and Identity. The other four arrive in the articles that need them:
 
 [![Staybook modules and how they talk](images/article-01/context-map.png)](images/article-01/context-map.png)
 

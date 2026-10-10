@@ -1,0 +1,17 @@
+sequenceDiagram
+    actor Guest
+    actor Host
+    participant Pricing
+    participant Booking
+    participant Availability
+    participant Payments
+
+    Guest->>Pricing: get a quote
+    Pricing-->>Guest: QuoteId
+    Guest->>Booking: request to book (QuoteId)
+    Booking->>Availability: hold the nights
+    Booking->>Payments: authorize the card
+    Note over Booking: waits for the host (up to 24 h)
+    Host->>Booking: accept
+    Booking->>Availability: confirm the nights
+    Booking-)Payments: capture the payment

@@ -35,29 +35,7 @@ Staybook is a **production-oriented reference architecture**, not a platform you
 
 Instead of drawing boxes, walk through one scenario: *a guest requests a stay, the host accepts, the payment is captured.*
 
-```mermaid
-sequenceDiagram
-    actor Guest
-    actor Host
-    participant Listings
-    participant Pricing
-    participant Booking
-    participant Availability
-    participant Payments
-    participant Notifications
-
-    Guest->>Listings: find a listing
-    Guest->>Pricing: ask for a price
-    Pricing-->>Guest: stored quote (QuoteId)
-    Guest->>Booking: request to book (QuoteId, never a price)
-    Booking->>Availability: hold the nights
-    Booking->>Payments: authorize the card
-    Note over Booking: waiting for the host (up to 24 h)
-    Host->>Booking: accept
-    Booking->>Availability: hold becomes a confirmed allocation
-    Booking-)Payments: capture the payment
-    Booking-)Notifications: email guest and host
-```
+[![A guest requests a stay, the host accepts, the payment is captured](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/booking-flow.png)](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/booking-flow.png)
 
 Watch where the vocabulary changes:
 
@@ -71,31 +49,7 @@ Each change in vocabulary, rules and ownership suggests a boundary. That gives s
 
 Only three modules exist today (Listings, Pricing and Identity), because the others arrive in the articles that need them:
 
-```mermaid
-flowchart LR
-    Identity["<b>Identity</b><br/>users, roles"]
-    Listings["<b>Listings</b><br/>listing lifecycle"]
-    Pricing["<b>Pricing</b><br/>plans, stored quotes"]
-    Booking["<b>Booking</b><br/>reservation lifecycle<br/><i>article 5</i>"]
-    Availability["<b>Availability</b><br/>allocations of nights<br/><i>article 6</i>"]
-    Payments["<b>Payments</b><br/>operations, outcomes<br/><i>article 5</i>"]
-    Notifications["<b>Notifications</b><br/>email<br/><i>article 7</i>"]
-
-    Listings -- "query" --> Pricing
-    Booking -- "query: quote" --> Pricing
-    Booking == "command: allocate nights" ==> Availability
-    Booking == "command: authorize" ==> Payments
-    Booking -. "message: capture, void, refund" .-> Payments
-    Booking -. "message: BookingConfirmed" .-> Notifications
-    Identity --- Listings
-    Identity --- Pricing
-    Identity --- Booking
-
-    classDef today fill:#d9f2e3,stroke:#2e8b57,color:#000
-    classDef later fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#555
-    class Identity,Listings,Pricing today
-    class Booking,Availability,Payments,Notifications later
-```
+[![Staybook modules and how they talk](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/context-map.png)](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/context-map.png)
 
 *Target architecture across the series. Green modules exist after article 1; dashed ones arrive later. Solid arrows are queries, thick arrows synchronous commands, dotted arrows messages.*
 
@@ -131,28 +85,7 @@ Seven modules sound like seven microservices. They aren't, yet. Staybook is one 
 
 Here's what actually runs after article 1:
 
-```mermaid
-flowchart TB
-    Client["API clients<br/>(.http files, tests)"]
-
-    subgraph AppHost["Aspire AppHost (local orchestration)"]
-        subgraph Monolith["Staybook.Api: one process"]
-            direction LR
-            Listings["Listings<br/>(skeleton)"]
-            Pricing["Pricing<br/>(skeleton)"]
-            Identity["Identity<br/>(skeleton)"]
-            Infra["Marten + Wolverine<br/>(registered only)"]
-        end
-        Postgres[("PostgreSQL<br/>database: staybook")]
-        Keycloak["Keycloak container<br/>(provisioned, unused until article 4)"]
-        Dashboard["Aspire dashboard<br/>logs, traces, metrics"]
-    end
-
-    Client --> Monolith
-    Monolith --> Postgres
-    Monolith -. "OpenTelemetry" .-> Dashboard
-    Keycloak ~~~ Monolith
-```
+[![What runs after article 1](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/runtime.png)](https://raw.githubusercontent.com/Alimurrazi/staybook-dotnet-reference-architecture/article-01/docs/articles/images/article-01/runtime.png)
 
 *What runs after article 1.*
 

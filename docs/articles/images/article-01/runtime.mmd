@@ -1,0 +1,16 @@
+flowchart LR
+    Client["API clients<br/>(.http files, tests)"]
+
+    subgraph AppHost["Aspire AppHost (local orchestration)"]
+        Api["<b>Staybook.Api</b> (one process)<br/>Listings · Pricing · Identity skeletons<br/>Marten + Wolverine registered only"]
+        Postgres[("PostgreSQL<br/>database: staybook")]
+        Dashboard["Aspire dashboard<br/>logs, traces, metrics"]
+        Keycloak["Keycloak container<br/>unused until article 4"]
+    end
+
+    Client --> Api
+    Api --> Postgres
+    Api -. "OpenTelemetry" .-> Dashboard
+
+    classDef unused fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#555
+    class Keycloak unused

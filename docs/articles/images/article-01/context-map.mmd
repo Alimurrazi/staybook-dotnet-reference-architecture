@@ -1,0 +1,20 @@
+flowchart LR
+    Identity["<b>Identity</b><br/>users, roles<br/><i>used by every module</i>"]
+    Listings["<b>Listings</b><br/>listing lifecycle"]
+    Pricing["<b>Pricing</b><br/>plans, stored quotes"]
+    Booking["<b>Booking</b><br/>reservation lifecycle<br/><i>article 5</i>"]
+    Availability["<b>Availability</b><br/>allocations of nights<br/><i>article 6</i>"]
+    Payments["<b>Payments</b><br/>operations, outcomes<br/><i>article 5</i>"]
+    Notifications["<b>Notifications</b><br/>email<br/><i>article 7</i>"]
+
+    Listings -- "query" --> Pricing
+    Booking -- "query: quote" --> Pricing
+    Booking == "command: allocate" ==> Availability
+    Booking == "command: authorize" ==> Payments
+    Booking -. "message: capture" .-> Payments
+    Booking -. "message: confirmed" .-> Notifications
+
+    classDef today fill:#d9f2e3,stroke:#2e8b57,color:#000
+    classDef later fill:#f2f2f2,stroke:#999,stroke-dasharray:4 3,color:#555
+    class Identity,Listings,Pricing today
+    class Booking,Availability,Payments,Notifications later

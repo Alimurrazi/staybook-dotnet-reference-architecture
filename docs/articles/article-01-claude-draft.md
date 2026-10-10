@@ -6,6 +6,19 @@ In this series we build **Staybook**, a simplified vacation rental backend inspi
 
 This first article designs Staybook and sets up a solution you can clone, run and test, with its boundaries enforced from the first commit.
 
+## The tools
+
+These are the main tools in this article. Each line says what the tool is and what Staybook uses it for; the links go to the official sites if you want to learn more.
+
+- **[ASP.NET Core 10](https://dotnet.microsoft.com/apps/aspnet)**: Microsoft's framework for building web APIs in C#. Staybook's whole backend is one ASP.NET Core application.
+- **[PostgreSQL](https://www.postgresql.org/)**: an open-source relational database. Staybook keeps all its data in one PostgreSQL database, with a separate schema for each module.
+- **[Marten](https://martendb.io/)**: a .NET library that turns PostgreSQL into a document database and an event store. Staybook uses it to store documents such as listings and quotes, and later the events of each booking.
+- **[Wolverine](https://wolverinefx.net/)**: a .NET library for handling commands and messages. Staybook uses it for its handlers, and later for reliable messaging, the outbox and sagas.
+- **[Aspire](https://aspire.dev/)**: a tool for running an application with everything it depends on. One command starts PostgreSQL and Keycloak in Docker, connects the API to them and opens a dashboard.
+- **[OpenTelemetry](https://opentelemetry.io/)**: an open standard for logs, traces and metrics. Staybook sends them to the Aspire dashboard, so you can see what each request did.
+- **[Keycloak](https://www.keycloak.org/)**: an open-source login and identity server. It's started now but used only from article 4, for authentication.
+- **[ArchUnitNET](https://github.com/TNG/ArchUnitNET)**: a library for writing tests about the code's structure. Staybook's architecture tests use it to check the module and layer rules.
+
 **What exists after this article:**
 
 - three module skeletons: Listings, Pricing and Identity;

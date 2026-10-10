@@ -134,7 +134,7 @@ tests/Staybook.ArchitectureTests/
 What each part is for:
 
 - **`Staybook.AppHost`**: the Aspire project you run locally. It starts PostgreSQL and Keycloak in Docker and then starts the API connected to them.
-- **`Staybook.ServiceDefaults`**: setup every service shares: OpenTelemetry, health checks and resilience for outgoing calls.
+- **`Staybook.ServiceDefaults`**: setup every service shares: OpenTelemetry and health checks.
 - **`Staybook.Api`**: the application that actually runs. It only wires things together and registers the modules; it holds no business rules itself.
 - **`Staybook.SharedKernel`**: a few small types every module needs, such as `Money` and `DateRange` (from article 2). Kept small on purpose, because every module depends on it.
 - **`Modules/<Module>/Staybook.<Module>`**: one module's private code, in four folders:

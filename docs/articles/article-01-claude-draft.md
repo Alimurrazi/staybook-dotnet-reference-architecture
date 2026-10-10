@@ -19,6 +19,8 @@ These are the main tools in this article. Each line says what the tool is and wh
 - **[Keycloak](https://www.keycloak.org/)**: an open-source login and identity server. It's started now but used only from article 4, for authentication.
 - **[ArchUnitNET](https://github.com/TNG/ArchUnitNET)**: a library for writing tests about the code's structure. Staybook's architecture tests use it to check the module and layer rules.
 
+## What this article builds, and what comes later
+
 **What exists after this article:**
 
 - three module skeletons: Listings, Pricing and Identity;
